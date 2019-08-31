@@ -30,10 +30,10 @@ globalStyles(// language=CSS
 
 
 const Heyooo = x('heyo', (props) =>{
-    let styles = "height:100px;width:100px";
-    if(props.num % 2) styles = "";
-
-    console.log('new styles', styles)
+    // let styles = "height:100px;width:100px";
+    // if(props.num % 2) styles = "";
+    //
+    // console.log('new styles', styles)
     return (
 
         <Fragment>
@@ -51,12 +51,12 @@ const Heyooo = x('heyo', (props) =>{
                 `
                 }
             </style>
-            <div className="derp" style={styles}>
-                heyooo: {typeof props.num} : {props.num}
-            </div>
-            <div className="derp" style={styles}>
-                heyooo: {typeof props.num} : {props.num}
-            </div>
+            {/*<div className="derp" style={styles}>*/}
+                {/*heyooo: {typeof props.num} : {props.num}*/}
+            {/*</div>*/}
+            {/*<div className="derp" style={styles}>*/}
+                {/*heyooo: {typeof props.num} : {props.num}*/}
+            {/*</div>*/}
         </Fragment>
 
     )
@@ -155,13 +155,16 @@ export const App = x('app', class extends X {
                 </style>
 
 
-                <h1 className={{derp: todos.todoName === ''}}> TODOS!!!!</h1>
+                <h1
+                    //className={{derp: todos.todoName === ''}}
+                >
+                    TODOS!!!!</h1>
                 <h4> Num search results: {todos.displayList.length}</h4>
 
-                <Heyooo num={todos.displayList.length}/>
+                {/*<Heyooo num={todos.displayList.length}/>*/}
 
-                <input ref={this.input} placeholder="add todo" value={todos.todoName}
-                       onInput={(e) => todos.todoName = e.target.value}/>
+                {/*<input ref={this.input} placeholder="add todo" value={todos.todoName}*/}
+                       {/*onInput={(e) => todos.todoName = e.target.value}/>*/}
 
                 <button onClick={() => state.bool = !state.bool}> show hid derp</button>
 
