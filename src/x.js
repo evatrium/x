@@ -60,6 +60,8 @@ class X extends HTMLElement {
 
              but, somehow, first appending a template element does the trick.
 
+             works in the browser
+
              having a hard time testing it though,
 
              when i run npm test, and try to access innerHTML of the shadow root, i just get the template element
