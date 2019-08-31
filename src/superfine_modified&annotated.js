@@ -209,17 +209,6 @@ var patchNode = (parent, node, oldVNode, newVNode, isSvg) => {
 
         isSvg = isSvg || newVNode.name === "svg"
 
-        /*
-            START - ALTERATIONS
-            including more selective updating of attributes on elements for web component purposes.
-            Also including additional diffing for embedded style and className values as objects
-            as opposed to comparing string values only.
-
-            className={booleanVariable ? 'myClassName' : ''} style="font-weight:bold;"
-            or
-            className={{myClassName:booleanVariable}} style={{fontWeight: 'bold'}}
-         */
-        // console.log(oldVProps, newVProps)
 
         for (var i in merge(oldVProps, newVProps)) {
             let _old = oldVProps[i], _new = newVProps[i];
@@ -227,7 +216,7 @@ var patchNode = (parent, node, oldVNode, newVNode, isSvg) => {
                 patchProperty(node, i, _old, _new, isSvg)
             }
         }
-        /*END - ALTERATIONS */
+
 
         while (newHead <= newTail && oldHead <= oldTail) {
             if (
