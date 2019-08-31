@@ -9,6 +9,10 @@ let PROPS = Symbol(),
 
 let shady = window.ShadyCSS;
 
+/*
+    heavily inspired by atomico, stencil, preact and hyperapp
+ */
+
 class X extends HTMLElement {
 
     context = context;
