@@ -10,7 +10,7 @@ let PROPS = Symbol(),
 let shady = window.ShadyCSS;
 
 /*
-    heavily inspired by atomico, stencil, preact and hyperapp
+    heavily inspired by atomico, stencil, preact and superfine
  */
 
 class X extends HTMLElement {
@@ -51,6 +51,13 @@ class X extends HTMLElement {
 
     _initialRender = (...next) => {
 
+        /*
+
+             superfine wont mount into the shadow root
+             so first appending a template element somehow does the trick.
+
+             having a hard time testing it
+         */
         this._root.appendChild(d.createElement('template'));
 
         let results = this.render(...next);// nothing rendered yet, just need to pass the host ref to render before calling willRender
