@@ -54,7 +54,7 @@ class X extends HTMLElement {
         /*
 
              been having issues trying to figure out how to use a fragment as the root element.
-             checkout the vdom code (with annotations) to see how i am attempting to implement it
+             checkout the vdom code (src/superfine_modified&annotated.js) to see how i am attempting to implement it
 
              superfine wont mount into the shadow root
 
