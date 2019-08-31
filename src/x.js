@@ -53,10 +53,16 @@ class X extends HTMLElement {
 
         /*
 
-             superfine wont mount into the shadow root
-             so first appending a template element somehow does the trick.
+             been having issues trying to figure out how to use a fragment as the root element.
+             checkout the vdom code (with annotations) to see how i am attempting to implement it
 
-             having a hard time testing it
+             superfine wont mount into the shadow root
+
+             but, somehow, first appending a template element does the trick.
+
+             having a hard time testing it though,
+
+             when i run npm test, and try to access innerHTML of the shadow root, i just get the template element
          */
         this._root.appendChild(d.createElement('template'));
 
@@ -64,7 +70,7 @@ class X extends HTMLElement {
         this.willRender(...next);
 
         if (isFunc(results)) {
-            this._renderer = results;
+            this._renderer = results; // if a function is returned then save it as the renderer
             patch(this._root,
                 this._renderer(extend({host: this}, this[PROPS]), this.state, this.context)
             );//...spreading the args there again doesn't work for some reason
