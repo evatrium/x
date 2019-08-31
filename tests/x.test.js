@@ -83,16 +83,14 @@ describe("X", () => {
         let {tag: t, elem, mountPoint} = await mount(Heyoo, {name: 'foo'}, 'heyyo');
 
 
-        console.log(elem.shadowRoot.childNodes[0].innerHtml)
+        console.log(elem.shadowRoot.innerHTML)
         console.log(mountPoint)
 
 
         expect(elem.getAttribute('name')).toBe("foo");
 
         await till();
-        await till();
-        await till();
-        await till();
+
 
         // console.log(elem.shadowRoot.innerHTML)
         expect(mountPoint.innerHTML).toBe(`<${tag} name="foo">heyyo</${tag}>`);
