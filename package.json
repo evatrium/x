@@ -1,0 +1,60 @@
+{
+	"name": "@iosio/x",
+	"version": "0.0.4",
+	"description": "web component experiments",
+	"main": "lib/index.js",
+	"module": "lib/index.esm.js",
+	"browser": "lib/index.bundle.js",
+	"publishConfig": {
+		"access": "public"
+	},
+	"license": "MIT",
+	"files": [],
+	"keywords": [],
+	"scripts": {
+		"start": "es-dev-server",
+		"test": "karma start --single-run --browsers ChromeHeadless karma.conf.js",
+		"build": "rimraf lib && rollup -c rollup.config.lib.js"
+	},
+	"peerDependencies": {
+		"@iosio/obi": "0.0.6"
+	},
+	"peerDependenciesMeta": {
+		"@iosio/obi": {
+			"optional": true
+		}
+	},
+	"dependencies": {
+		"@iosio/obi": "0.0.8",
+		"@iosio/util": "0.0.4"
+	},
+	"devDependencies": {
+		"@atomico/rollup-plugin-sizes": "^1.0.3",
+		"@babel/core": "^7.5.5",
+		"@babel/plugin-proposal-class-properties": "^7.5.5",
+		"@babel/plugin-proposal-object-rest-spread": "^7.5.5",
+		"@babel/plugin-syntax-dynamic-import": "^7.2.0",
+		"@babel/plugin-syntax-import-meta": "^7.2.0",
+		"@babel/plugin-transform-react-jsx": "^7.3.0",
+		"@babel/plugin-transform-template-literals": "^7.4.4",
+		"@iosio/babel-plugin-jcss": "0.0.4",
+		"@open-wc/building-utils": "^2.7.0",
+		"babel-plugin-bundled-import-meta": "^0.3.1",
+		"babel-plugin-transform-inline-environment-variables": "^0.4.3",
+		"es-dev-server": "^1.5.0",
+		"jasmine-core": "^3.4.0",
+		"karma": "^4.2.0",
+		"karma-chrome-launcher": "^3.1.0",
+		"karma-jasmine": "^2.0.1",
+		"karma-rollup-preprocessor": "^7.0.2",
+		"karma-spec-reporter": "0.0.32",
+		"preact": "^10.0.0-rc.1",
+		"rimraf": "^2.6.3",
+		"rollup": "^1.15.4",
+		"rollup-plugin-babel": "^4.3.3",
+		"rollup-plugin-index-html": "^1.5.0",
+		"rollup-plugin-node-resolve": "^5.2.0",
+		"rollup-plugin-terser": "^5.1.1",
+		"rollup-plugin-sucrase": "^2.1.0"
+	}
+}

@@ -1,0 +1,10 @@
+
+
+https://www.codementor.io/bennyp/lets-build-web-components-part-2-the-polyfills-nzy0icg0c
+
+
+https://codeburst.io/taming-huge-collections-of-dom-nodes-bebafdba332
+
+https://github.com/DannyMoerkerke/material-webcomponents
+
+https://medium.com/dev-channel/focus-inside-shadow-dom-78e8a575b73
