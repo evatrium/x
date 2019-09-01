@@ -51,22 +51,6 @@ class X extends HTMLElement {
 
     _initialRender = (...next) => {
 
-        /*
-
-             been having issues trying to figure out how to use a fragment as the root element.
-             checkout the vdom code (src/superfine_modified&annotated.js) to see how i am attempting to implement it
-
-             superfine wont mount into the shadow root
-
-             but, somehow, first appending a template element does the trick.
-
-             works in the browser
-
-             having a hard time testing it though,
-
-             when i run npm test, and try to access innerHTML of the shadow root, i just get the template element
-         */
-
         let results = this.render(...next),
 
             _usingFrag = results.name === FRAGMENT_TYPE;
