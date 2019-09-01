@@ -262,4 +262,4 @@ var createElem = (elem) => d.createElement(elem),
             : createVNode(name, props, children, null, props.key)
     };
 
-export {patch, h, Fragment, removeHandlers}
+export {patch, h, Fragment, removeHandlers, FRAGMENT_TYPE}

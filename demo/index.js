@@ -124,7 +124,7 @@ export const App = x('app', class extends X {
 
 
     didRender() {
-        console.log('did render')
+        console.log('did render', this.shadowRoot.innerHTML)
     }
 
     add = () => {
@@ -138,7 +138,7 @@ export const App = x('app', class extends X {
         console.log('rendered')
 
         return (
-            <Fragment>
+            <Fragment id={'root'}>
 
                 <style>
                     {// language=CSS
@@ -154,10 +154,20 @@ export const App = x('app', class extends X {
                         `}
                 </style>
 
+                {/*
 
+                    ******************
+
+                    changing the class on subsequent render will indicate that the fragment hack is not working correctly.
+                    - if not working correctly it will change on the second re-render not the first re-render;
+                    - if working, will change first re-render
+
+                */}
                 <h1
-                    //className={{derp: todos.todoName === ''}}
+                    className={{derp: todos.todoName === ''}}
                 >
+
+
                     TODOS!!!!</h1>
                 <h4> Num search results: {todos.displayList.length}</h4>
 
@@ -168,7 +178,7 @@ export const App = x('app', class extends X {
 
                 <button onClick={() => state.bool = !state.bool}> show hid derp</button>
 
-                {state.bool && <Derp name={todos.todoName}/>}
+                {/*{state.bool && <Derp name={todos.todoName}/>}*/}
 
 
 

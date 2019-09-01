@@ -1,7 +1,7 @@
 import {def, extend, isFunc} from '@iosio/util'
 import {formatType, setAttr, propToAttr, attrToProp, webComponentVisibility, d} from "../src/utils";
 import {obi} from "@iosio/obi";
-import {h, patch, removeHandlers} from "./vdom";
+import {h, patch, removeHandlers, FRAGMENT_TYPE} from "./vdom";
 
 let PROPS = Symbol(),
     IGNORE_ATTR = Symbol(),
@@ -66,17 +66,18 @@ class X extends HTMLElement {
 
              when i run npm test, and try to access innerHTML of the shadow root, i just get the template element
          */
-        this._root.appendChild(d.createElement('template'));
 
-        let results = this.render(...next);// nothing rendered yet, just need to pass the host ref to render before calling willRender
-        this.willRender(...next);
+        let results = this.render(...next),
 
-        if (isFunc(results)) {
-            this._renderer = results; // if a function is returned then save it as the renderer
-            patch(this._root,
-                this._renderer(extend({host: this}, this[PROPS]), this.state, this.context)
-            );//...spreading the args there again doesn't work for some reason
-        } else patch(this._root, results);
+            _usingFrag = results.name === FRAGMENT_TYPE;
+
+        this._mountPoint = d.createElement(_usingFrag ? 'template' : results.name);
+
+        this._root.appendChild(this._mountPoint);
+
+        this._base = patch(_usingFrag ?  this._root : this._mountPoint , results);
+
+        this._usingFrag = _usingFrag;
 
         requestAnimationFrame(() => {
             this.classList.add('___');
@@ -89,7 +90,7 @@ class X extends HTMLElement {
 
     _subsequentRender = (...next) => {
         !this.willRender(...next) // returning true will prevent re render
-        && patch(this._root,
+        && patch(this._usingFrag ? this._root : this._base,
             isFunc(this._renderer)
                 ? this._renderer(...next)
                 : this.render(...next)

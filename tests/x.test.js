@@ -34,67 +34,138 @@ let mapObjectToHTMLAttributes = (attributes) =>
     ) : "";
 
 
-const mount = async (Component, attributes = {}, children) => {
+const mount = async (tag, Component, attributes = {}, children) => {
     // tag = tag || randomName();
 
     // await customElements.whenDefined(tag);
 
+    let parent = document.createElement("div");
+
+
     let mountPoint = document.createElement("div");
 
-    // mountPoint.innerHTML = (`<${tag} ${mapObjectToHTMLAttributes(attributes) || ""}>${children || ""}</${tag}>`);
-
-    document.body.appendChild(mountPoint);
+    mountPoint.setAttribute('id', 'derp');
 
 
-    let elem = patch(mountPoint, <Component/>)
+    parent.appendChild(mountPoint);
+
+
+    mountPoint.innerHTML = (`<${tag} ${mapObjectToHTMLAttributes(attributes) || ""}>${children || ""}</${tag}>`);
+
+    document.body.appendChild(parent);
+
+
+    await till();
+
+
+    // console.log(document.getElementById('derp').parentNode)
+
+    // let elem =
+    // patch(mountPoint, <Component {...attributes}>{children}</Component>);
     // let elem = patch(div, h(tag,attributes))
 
 
-    // let elem = document.getElementsByTagName(tag)[0];
+    let elem = document.getElementsByTagName(tag)[0];
 
-    await elem._mounted;
+
+    await till();
+
 
     return {
         // tag,
 
-        elem, mountPoint}
+        elem, mountPoint
+    }
 };
 
 
-describe("X", () => {
+describe("X temporary tests", () => {
 
 
-    it("renders a tag to the dom", async () => {
+    it("renders a tag to the dom", async (done) => {
 
 
         const tag = randomName();
 
-       let Heyoo =  element(tag, ({host}) => {
-            //
-            // host.lifeCycle = ()=>{
-            //     console.log('mounted')
-            // }
+        let Heyoo = element(tag, class extends X {
 
-            return <h1>X!</h1>
+            lifeCycle() {
+                console.log('mounted *****************')
+            }
 
+            render() {
+                console.log('rendered *************')
+                return <Fragment>
+                    <h1>X!</h1>
+                </Fragment>
+            }
         }, {name: String});
 
 
-        let {tag: t, elem, mountPoint} = await mount(Heyoo, {name: 'foo'}, 'heyyo');
+        let {elem, mountPoint} = await mount(tag, Heyoo, {name: 'foo'}, 'heyyo');
 
+        await elem._mounted;
 
-        console.log(elem.shadowRoot.innerHTML)
-        console.log(mountPoint)
-
-
-        expect(elem.getAttribute('name')).toBe("foo");
 
         await till();
 
 
-        // console.log(elem.shadowRoot.innerHTML)
-        expect(mountPoint.innerHTML).toBe(`<${tag} name="foo">heyyo</${tag}>`);
+        console.log(elem.isConnected)
+        console.log(elem.shadowRoot.innerHTML)
 
+
+        expect(elem.getAttribute('name')).toBe("foo");
+
+
+        // console.log(elem.shadowRoot.innerHTML)
+        expect(mountPoint.innerHTML).toBe(`<${tag} name="foo" class="___">heyyo</${tag}>`);
+
+        done()
+
+    });
+
+
+    it("renders a tag to the dom using a Fragment root component", async (done) => {
+
+
+        const tag = randomName();
+
+        let Heyoo = element(tag, class extends X {
+
+            lifeCycle() {
+                console.log('mounted *****************')
+            }
+
+            render() {
+                console.log('rendered *************')
+                return (
+                    <Fragment>
+                        <h1>X!</h1>
+                    </Fragment>
+                )
+            }
+        }, {name: String});
+
+
+        let {elem, mountPoint} = await mount(tag, Heyoo, {name: 'foo'}, 'heyyo');
+
+        await elem._mounted;
+
+
+        await till();
+
+
+        console.log(elem.isConnected)
+        console.log(elem.shadowRoot.innerHTML)
+
+
+        expect(elem.getAttribute('name')).toBe("foo");
+
+
+        // console.log(elem.shadowRoot.innerHTML)
+        expect(mountPoint.innerHTML).toBe(`<${tag} name="foo" class="___">heyyo</${tag}>`);
+
+        done()
 
     });
 
