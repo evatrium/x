@@ -142,7 +142,9 @@ describe('Xelement lifeCycles', () => {
 
         await node._process;
 
-        node.setAttribute('test-text', 'test1'); // 2
+        node.setAttribute('test-text', 'test1'); // 3
+
+        await node._process;
 
         tests({
             willRender: 2,
