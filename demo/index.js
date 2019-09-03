@@ -1,6 +1,8 @@
-import {x, X, h, Fragment, globalStyles} from "../src";
+import {x, Xelement, h, Fragment, globalStyles} from "../src";
 import {todos} from "../demo/todos";
 import {extend} from "@iosio/util";
+
+import {obi} from "@iosio/obi";
 
 globalStyles(// language=CSS
         `    html {
@@ -21,6 +23,14 @@ globalStyles(// language=CSS
             flex: 1 0 auto;
         }
 
+        .asdf {
+            color: pink;
+        }
+
+        .poop {
+            background: purple;
+        }
+
         *, *::before,
         *::after {
             box-sizing: border-box;
@@ -29,7 +39,7 @@ globalStyles(// language=CSS
 );
 
 
-const Heyooo = x('heyo', (props) =>{
+const Heyooo = x('heyo', (props) => {
     // let styles = "height:100px;width:100px";
     // if(props.num % 2) styles = "";
     //
@@ -39,23 +49,23 @@ const Heyooo = x('heyo', (props) =>{
         <Fragment>
             <style>
                 {// language=CSS
-                    `
-                    :host, *, *::before,
-                    *::after {
-                        box-sizing: border-box;
-                    }
+                        `
+                        :host, *, *::before,
+                        *::after {
+                            box-sizing: border-box;
+                        }
 
-                    .derp {
-                        background: red;
-                    }
-                `
+                        .derp {
+                            background: red;
+                        }
+                    `
                 }
             </style>
             {/*<div className="derp" style={styles}>*/}
-                {/*heyooo: {typeof props.num} : {props.num}*/}
+            {/*heyooo: {typeof props.num} : {props.num}*/}
             {/*</div>*/}
             {/*<div className="derp" style={styles}>*/}
-                {/*heyooo: {typeof props.num} : {props.num}*/}
+            {/*heyooo: {typeof props.num} : {props.num}*/}
             {/*</div>*/}
         </Fragment>
 
@@ -63,68 +73,44 @@ const Heyooo = x('heyo', (props) =>{
 }, {num: Number});
 
 
-const Derp = x('derp', ({host}, state) => {
-
-    host.state = {
-        count: 0
-    };
-
-    host.lifeCycle = () => {
-        console.log('did mount ***');
-        return () => console.log('unmounted');
-    };
-
-    host.willRender = () => {
-        console.log('will render ****')
-    };
-
-    host.didRender = () => {
-        console.log('did render ***')
-    };
-
-
-    let inc = () => host.state.count++;
-
-
-    return ({name}, state, context) => {
-
-        return (
-            <Fragment>
-                <style>
-                    {// language=CSS
-                            `
-                            :host, *, *::before,
-                            *::after {
-                                box-sizing: border-box;
-                            }
-
-                            .derp {
-                                background: red;
-                            }
-                        `
-                    }
-                </style>
-                <h1>
-                    heyooo : {name} ... count: {state.count}
-                </h1>
-
-                <button onClick={inc}>+</button>
-                <slot/>
-
-            </Fragment>
-        )
-    }
-
-}, {name: String});
-
-
-export const App = x('app', class extends X {
-
-    state = extend(todos, {bool: true});
-
+const Test = x('test', class extends Xelement {
+    static propTypes = {name: String};
 
     didRender() {
-        console.log('did render', this.shadowRoot.innerHTML)
+        super.didRender();
+        console.log('did render test')
+    }
+
+    willRender() {
+
+        console.log('will render test')
+    }
+
+    render({Host, name}) {
+        return (
+            <Host className={'poop'}>
+                <h1>say hello - name: {name} </h1>
+            </Host>
+        )
+    }
+})
+
+
+export const App = x('app', class extends Xelement {
+
+    state = {bool: true};
+
+    observe = obi(todos);
+
+    // obi(extend(todos, {bool: true}));
+
+    willRender(props, state) {
+
+    }
+
+    didRender() {
+        // console.log('did render', this.shadowRoot.innerHTML)
+        // console.log(this.ref)
     }
 
     add = () => {
@@ -133,12 +119,22 @@ export const App = x('app', class extends X {
     };
 
 
-    render(props, state) {
+    render({Host, ...props}, state) {
 
-        console.log('rendered')
+        // console.log('rendered')
+
+        const TextList = ({derp}) => (
+            <Fragment>
+
+                {todos.displayList.map(t => (<div onClick={derp} key={t.id}>{t.name}</div>))}
+
+            </Fragment>
+
+        );
+
 
         return (
-            <Fragment id={'root'}>
+            <Host>
 
                 <style>
                     {// language=CSS
@@ -148,11 +144,17 @@ export const App = x('app', class extends X {
                                 box-sizing: border-box;
                             }
 
+                            .asdf {
+                                color: pink;
+                            }
+
+
                             .derp {
                                 background: red;
                             }
                         `}
                 </style>
+
 
                 {/*
 
@@ -163,23 +165,29 @@ export const App = x('app', class extends X {
                     - if working, will change first re-render
 
                 */}
-                <h1
-                    className={{derp: todos.todoName === ''}}
+                <h1 className={{derp: todos.todoName === ''}}>
+                    TODOS!!!!
+                </h1>
+
+
+                <h1 style={state.bool ? {color: todos.todoName === '' ? 'blue' : 'red'} : 'color:green'}
                 >
+                    style object!!!!</h1>
 
 
-                    TODOS!!!!</h1>
                 <h4> Num search results: {todos.displayList.length}</h4>
+
 
                 {/*<Heyooo num={todos.displayList.length}/>*/}
 
                 {/*<input ref={this.input} placeholder="add todo" value={todos.todoName}*/}
-                       {/*onInput={(e) => todos.todoName = e.target.value}/>*/}
+                {/*onInput={(e) => todos.todoName = e.target.value}/>*/}
 
-                <button onClick={() => state.bool = !state.bool}> show hid derp</button>
+                {/*<button onClick={() => state.bool = !state.bool}> show hid derp</button>*/}
+                <button onClick={() => this.setState({bool: !state.bool})}> bool</button>
 
-                {/*{state.bool && <Derp name={todos.todoName}/>}*/}
 
+                {state.bool && <Test name={todos.todoName} onClick={() => console.log('shit balls')}/>}
 
 
                 <button onClick={todos.makeABunch}> make a bunch</button>
@@ -222,7 +230,9 @@ export const App = x('app', class extends X {
 
                     <div style="width:50%">
 
-                        {todos.displayList.map(t => (<div key={t.id}>{t.name}</div>))}
+
+                        <TextList derp={() => console.log('derp')}/>
+
 
                     </div>
 
@@ -230,8 +240,25 @@ export const App = x('app', class extends X {
                 </div>
 
 
-            </Fragment>
+            </Host>
         )
     }
 
 });
+//
+// export const App = x('app', class extends Xelement {
+//
+//     state = {bool: false};
+//
+//     render() {
+//         return (
+//             <div>
+//
+//                 hello
+//                 {this.state.bool && <div>heyoo</div>}
+//
+//                 <button onClick={() => this.state.bool = !this.state.bool}> click me</button>
+//             </div>
+//         )
+//     }
+// })

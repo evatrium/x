@@ -1,23 +1,37 @@
 import {def, extend, isFunc} from '@iosio/util'
-import {formatType, setAttr, propToAttr, attrToProp, webComponentVisibility, d} from "../src/utils";
-import {obi} from "@iosio/obi";
-import {h, patch, removeHandlers, FRAGMENT_TYPE} from "./vdom";
+import {
+    formatType,
+    updateAttribute,
+    propToAttr,
+    attrToProp,
+    webComponentVisibility,
+    createElement,
+    appendChild,
+    d
+} from "../src/utils";
+import {h, patch, removeHandlers, FRAGMENT_TYPE, patchProperty, merge} from "./vdom";
 
-let PROPS = Symbol(),
+let
+    PROPS = Symbol(),
+    // PROPS = 'props',
     IGNORE_ATTR = Symbol(),
     context = {};
 
-let shady = window.ShadyCSS;
+// let shady = window.ShadyCSS;
+// --- yeah, prop not gonna even bother with internet explorer...
+// styles can't be dynamically updated in the render func, the docs say to use custom properties only
 
-/*
-    heavily inspired by atomico, stencil, preact and superfine
- */
+/*  heavily inspired by atomico, stencil, preact and superfine */
 
-class X extends HTMLElement {
+class Xelement extends HTMLElement {
 
     context = context;
 
     _unsubs = [];
+
+    _hostElementProps = {};
+
+    state = {};
 
     constructor() {
         super();
@@ -28,72 +42,73 @@ class X extends HTMLElement {
         let {_initAttrs} = this.constructor;
         let length = _initAttrs.length;
         while (length--) _initAttrs[length](this);
-
-        def(this, 'state', {
-            set(state) {
-                !this._state && (this._unsubs.push(
-                    obi(state).$onChange(this.update)
-                ), this._state = state);
-            },
-            get() {
-                return this._state;
-            }
-        });
     }
+
+    Host = (props, children) => {
+        this._usingFrag = true;
+        for (let key in merge(props, this._hostElementProps))
+            patchProperty(this, key, this._hostElementProps[key], props[key]);
+        this._hostElementProps = props;
+        return h(FRAGMENT_TYPE, {}, children);
+    };
 
     connectedCallback() {
         if (this._has_mounted) return;
-        shady && shady.styleElement(this);
+        // shady && shady.styleElement(this);
         this.attachShadow({mode: 'open'});
         this._root = (this.shadowRoot || this);
+        this.state.$onChange && this._unsubs.push(this.state.$onChange(this.update));
+        this.observe && this.observeObi(this.observe);
         this._mount();
     }
 
-    _initialRender = (...next) => {
-
-        let results = this.render(...next),
-
-            _usingFrag = results.name === FRAGMENT_TYPE;
-
-        this._mountPoint = d.createElement(_usingFrag ? 'template' : results.name);
-
-        this._root.appendChild(this._mountPoint);
-
-        this._base = patch(_usingFrag ?  this._root : this._mountPoint , results);
-
-        this._usingFrag = _usingFrag;
-
-        requestAnimationFrame(() => {
-            this.classList.add('___');
-            this.didRender(...next);
-            this._unsubs.push(this.lifeCycle(...next));
-        });
-
-        this._has_mounted = true;
+    setState = (nextState) => {
+        extend(this.state, isFunc(nextState) ? nextState(this.state) : nextState || {});
+        this.update();
     };
 
-    _subsequentRender = (...next) => {
-        !this.willRender(...next) // returning true will prevent re render
-        && patch(this._usingFrag ? this._root : this._base,
-            isFunc(this._renderer)
-                ? this._renderer(...next)
-                : this.render(...next)
-        ) && this.didRender(...next);
-    };
+    observeObi = (...obis) =>
+        obis.forEach(obi => obi.$onChange && this._unsubs.push(obi.$onChange(this.update)));
 
     update = () => {
         if (!this._process) {
             this._process = this._mounted.then((next) => {
-                next = [extend({host: this}, this[PROPS]), this.state, this.context];
+                next = [extend({Host: this.Host}, this[PROPS]), this.state, this.context];
                 !this._has_mounted
                     ? this._initialRender(...next)
                     : this._subsequentRender(...next);
-                shady && shady.styleSubtree(this);
+                // shady && shady.styleSubtree(this);
                 this._process = false;
             });
         }
         return this._process;
     };
+
+    _initialRender = (...next) => {
+        this.willRender(...next);
+        let results = this.render(...next),
+            mountPoint = createElement(this._usingFrag ? 'template' : results.name);
+        appendChild(this._root, mountPoint);
+        this._base = patch(this._usingFrag ? this._root : mountPoint, results);
+        setTimeout(() => {
+            this.classList.add('___');
+            this.didRender(...next);
+            this._unsubs.push(this.lifeCycle(...next));
+        });
+        this._has_mounted = true;
+    };
+
+    _subsequentRender = (...next) => {
+
+        if (!(this.willRender())) {// returning true will prevent re render
+            patch(this._usingFrag ? this._root : this._base, this.render(...next))
+            this.didRender();
+        }
+    };
+    emit = (name, detail, from) =>
+        (from || this).dispatchEvent(
+            new CustomEvent(name, {detail, bubbles: true, composed: true})
+        );
 
     attributeChangedCallback(attr, oldValue, newValue) {
         if (attr === this[IGNORE_ATTR] || oldValue === newValue) return;
@@ -119,7 +134,7 @@ class X extends HTMLElement {
                         if (schema.reflect) {
                             this._mounted.then(() => {
                                 this[IGNORE_ATTR] = attr;
-                                setAttr(this, attr, schema.type === Boolean && !value ? null : value);
+                                updateAttribute(this, attr, schema.type === Boolean && !value ? null : value);
                                 this[IGNORE_ATTR] = false;
                             });
                         }
@@ -146,7 +161,7 @@ class X extends HTMLElement {
     }
 
     disconnectedCallback() {
-        !this._destroyed && this._destroy()
+        !this._destroyed && this._destroy();
     }
 
     _destroy = (dom) => {
@@ -159,15 +174,15 @@ class X extends HTMLElement {
 const element = (tag, component, propTypes) => {
         webComponentVisibility(tag);
         customElements.define(tag,
-            component.prototype instanceof X ? component :
-                class extends X {
+            component.prototype instanceof Xelement ? component :
+                class extends Xelement {
                     static propTypes = propTypes;
                     render = component;
                 }
         );
         return (props, children) => h(tag, props, children);
     },
-    x = (tag, RenderComponent, _propTypes, childrenConfig) =>
-        element('x-' + tag, RenderComponent, _propTypes, childrenConfig);
+    x = (tag, component, propTypes) =>
+        element('x-' + tag, component, propTypes);
 
-export {X, x, element, context}
+export {Xelement, x, element, context}

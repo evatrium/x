@@ -1,4 +1,3 @@
-
 const {DEFAULT_EXTENSIONS} = require('@babel/core');
 const {findSupportedBrowsers} = require('@open-wc/building-utils');
 const resolve = require('rollup-plugin-node-resolve');
@@ -27,14 +26,21 @@ import pkg from './package.json';
 function external(id) {
     return !id.startsWith('.') && !id.startsWith('/');
 }
-function outputLib({file, format}) {
-    let oldSchoolShit = format !== 'esm';
-    let umdName = format === 'umd' ? {name:'pwc'} : {};
+
+console.log('building for browsers: ', findSupportedBrowsers());
+
+function outputLib({file, format, min}) {
+    let oldSchoolShit = format !== 'esm',
+        ESM = format === 'esm',
+        UMD = format === 'umd',
+        CJS = format === 'cjs';
+
+    let umdName = format === 'umd' ? {name: 'pwc'} : {};
     return {
         input: "src/index.js",
         treeshake: true,
         external,
-        output:{
+        output: {
             file,
             format,
             // dynamicImportFunction: !oldSchoolShit && 'importShim', //--- i think this is for bundling apps not so much for libs
@@ -55,7 +61,7 @@ function outputLib({file, format}) {
                     [
                         '@babel/preset-env',
                         {
-                            targets: oldSchoolShit ? ['ie 11'] : findSupportedBrowsers(),
+                            targets: oldSchoolShit ? ['ie 11'] : (ESM ? ['chrome 75'] : findSupportedBrowsers()),
                             // preset-env compiles template literals for safari 12 due to a small bug which
                             // doesn't affect most use cases. for example lit-html handles it: (https://github.com/Polymer/lit-html/issues/575)
                             exclude: oldSchoolShit ? undefined : ['@babel/plugin-transform-template-literals'],
@@ -65,7 +71,7 @@ function outputLib({file, format}) {
                     ],
                 ],
             }),
-            terser({
+          min && terser({
                 output: {comments: false},
                 mangle: {
                     properties: {
@@ -82,9 +88,10 @@ function outputLib({file, format}) {
 }
 
 export default [
-    outputLib({ file: pkg.main, format: 'cjs'}),
-    outputLib({ file: pkg.module, format: 'esm'}),
-    outputLib({ file: pkg.browser, format: 'umd'}),
+    outputLib({file: pkg.main, format: 'cjs'}),
+    outputLib({file: pkg.module, format: 'esm'}),
+    outputLib({file: pkg['module.min'], format: 'esm', min:true}),
+    outputLib({file: pkg.browser, format: 'umd', min: true}),
     // outputLib({ file: 'lib/index.system.js', format: 'system'}), // --- i think this is for bundling apps not so much for libs
 ];
 

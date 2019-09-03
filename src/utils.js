@@ -1,48 +1,80 @@
+import {isObj, isArray} from "@iosio/util";
+
 let d = document,
+    createElement = (elem) => d.createElement(elem),
+    appendChild = (node, child) => node.appendChild(child),
+    createTextNode = (text) => d.createTextNode(text),
+    /**
+     * creates a single style sheet. returns a function to update the same sheet
+     * @param {node|| null} mount - pass the node to mount the style element to defaults to document head
+     * @returns {function} for adding styles to the same stylesheet
+     */
     styleSheet = (mount) => {
-        let style = d.createElement('style');
-        style.appendChild(d.createTextNode(""));
-        (mount || d.head).appendChild(style);
-        return (css, insertRule) => {
-            // insertRule ? style.sheet.insertRule(css, style.sheet.cssRules.length) :
-            style.appendChild(d.createTextNode(css));
-            return style;
-        }
+        let style = createElement('style');
+        appendChild(style, createTextNode(""));
+        appendChild(mount || d.head, style);
+        return (css) => (appendChild(style, createTextNode(css)), style);
     },
     globalStyles = styleSheet(),
     webComponentVisibilityStyleSheet = styleSheet(),
-    webComponentVisibility = (tag) => {
-        webComponentVisibilityStyleSheet(`${tag} {visibility:hidden}`, true)
-    }, formatType = (value, type) => {
+    webComponentVisibility = (tag) => webComponentVisibilityStyleSheet(`${tag} {visibility:hidden}`),
+
+
+    /**
+     * for parsing the incoming attributes into consumable props
+     * @param value
+     * @param type
+     * @returns {{error: boolean, value: *}}
+     */
+    formatType = (value, type) => {
         type = type || String;
         try {
             if (type == Boolean) value = [true, 1, "", "1", "true"].includes(value);
             else if (typeof value == "string") {
                 value = type == Number ? Number(value)
-                    : type == Object || type == Array ? JSON.parse(value)
-                        : type == Function ? window[value]
-                            : type == Date ? new Date(value) : value;
+                    : type == Object || type == Array ? JSON.parse(value) : value;
             }
             if ({}.toString.call(value) == `[object ${type.name}]`)
                 return {value, error: type == Number && Number.isNaN(value)};
         } catch (e) {
         }
         return {value, error: true};
-    }, setAttr = (node, attr, value) => {
-        value == null ? node.removeAttribute(attr)
-            : node.setAttribute(attr, typeof value == "object" ? JSON.stringify(value) : value);
     },
+
+    isCustomElement = (el, isAttr) => {
+        if (!el.getAttribute || !el.localName) return false;
+        isAttr = el.getAttribute('is');
+        return el.localName.includes('-') || isAttr && isAttr.includes('-');
+    },
+    /**
+     * will set or remove the attribute based on the truthyness of the value.
+     * if the type of value === object (accounts for array) and the node is a custom element, it will json stringify the value
+     * @param node
+     * @param attr
+     * @param value
+     */
+    updateAttribute = (node, attr, value) => {
+        (value === null || value === false)
+            ? node.removeAttribute(attr)
+            : node.setAttribute(attr, isCustomElement(node) && (isObj(value) || isArray(value)) ? JSON.stringify(value) : value);
+    },
+
+
     propToAttr = (prop) => prop.replace(/([A-Z])/g, "-$1").toLowerCase(),
     attrToProp = (attr) => attr.replace(/-(\w)/g, (all, letter) => letter.toUpperCase());
+
 
 webComponentVisibilityStyleSheet(` .___ {visibility: inherit;}`, true);
 
 export {
+    createElement,
+    createTextNode,
+    appendChild,
     styleSheet,
     globalStyles,
     webComponentVisibility,
     formatType,
-    setAttr,
+    updateAttribute,
     propToAttr,
     attrToProp,
     d

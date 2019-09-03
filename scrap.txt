@@ -8,3 +8,51 @@ https://codeburst.io/taming-huge-collections-of-dom-nodes-bebafdba332
 https://github.com/DannyMoerkerke/material-webcomponents
 
 https://medium.com/dev-channel/focus-inside-shadow-dom-78e8a575b73
+
+
+
+    _initialRender = (...next) => {
+
+        let results = this.render(...next),
+            _usingFrag;
+
+        if(isFunc(results)){
+            this._renderer = results;
+            results = results(...next);
+        }
+
+        this._usingFrag = _usingFrag = results.name === FRAGMENT_TYPE;
+
+        this._mountPoint = d.createElement(_usingFrag ? 'template' : results.name);
+        this._root.appendChild(this._mountPoint);
+        this._base = patch(_usingFrag ? this._root : this._mountPoint, results);
+        requestAnimationFrame(() => {
+            this.classList.add('___');
+            this.didRender(...next);
+            this._unsubs.push(this.lifeCycle(...next));
+        });
+
+        this._has_mounted = true;
+    };
+
+    _subsequentRender = (...next) => {
+        !this.willRender(...next) // returning true will prevent re render
+        && patch(
+            this._usingFrag ? this._root : this._base,
+            isFunc(this._renderer) ? this._renderer(...next) : this.render(...next)
+        ) && this.didRender(...next);
+    };
+
+    update = () => {
+        if (!this._process) {
+            this._process = this._mounted.then((next) => {
+                next = [extend({Host: this}, this[PROPS]), this.state, this.context];
+                !this._has_mounted
+                    ? this._initialRender(...next)
+                    : this._subsequentRender(...next);
+                shady && shady.styleSubtree(this);
+                this._process = false;
+            });
+        }
+        return this._process;
+    };
