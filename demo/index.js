@@ -39,61 +39,11 @@ globalStyles(// language=CSS
 );
 
 
-const Heyooo = x('heyo', (props) => {
-    // let styles = "height:100px;width:100px";
-    // if(props.num % 2) styles = "";
-    //
-    // console.log('new styles', styles)
-    return (
-
-        <Fragment>
-            <style>
-                {// language=CSS
-                        `
-                        :host, *, *::before,
-                        *::after {
-                            box-sizing: border-box;
-                        }
-
-                        .derp {
-                            background: red;
-                        }
-                    `
-                }
-            </style>
-            {/*<div className="derp" style={styles}>*/}
-            {/*heyooo: {typeof props.num} : {props.num}*/}
-            {/*</div>*/}
-            {/*<div className="derp" style={styles}>*/}
-            {/*heyooo: {typeof props.num} : {props.num}*/}
-            {/*</div>*/}
-        </Fragment>
-
-    )
-}, {num: Number});
-
-
-const Test = x('test', class extends Xelement {
-    static propTypes = {name: String};
-
-    didRender() {
-        super.didRender();
-        console.log('did render test')
-    }
-
-    willRender() {
-
-        console.log('will render test')
-    }
-
-    render({Host, name}) {
-        return (
-            <Host className={'poop'}>
-                <h1>say hello - name: {name} </h1>
-            </Host>
-        )
-    }
-})
+const Test = x('test', ({Host, name}) => (
+    <Host className={'poop'}>
+        <h1>say hello - name: {name} </h1>
+    </Host>
+), {name: String});
 
 
 export const App = x('app', class extends Xelement {
