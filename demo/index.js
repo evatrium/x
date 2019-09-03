@@ -48,11 +48,14 @@ const Test = x('test', ({Host, name}) => (
 
 export const App = x('app', class extends Xelement {
 
+    static propTypes = {some: String, cool: Boolean, prop: Number, types: Object, yo: Array};
+
     state = {bool: true};
-
-    observe = obi(todos);
-
     // obi(extend(todos, {bool: true}));
+
+    observe = obi(todos); // detects mutations on object values and triggers an update
+
+
 
     willRender(props, state) {
 
