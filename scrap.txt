@@ -10,6 +10,12 @@ https://github.com/DannyMoerkerke/material-webcomponents
 https://medium.com/dev-channel/focus-inside-shadow-dom-78e8a575b73
 
 
+https://jasmine.github.io/2.0/introduction.html
+
+https://xstate.js.org/docs/
+
+https://app.slack.com/client/T41ECBKQ8/C41ECC0V6/thread/C41ECC0V6-1563274057.215400
+
 
     _initialRender = (...next) => {
 

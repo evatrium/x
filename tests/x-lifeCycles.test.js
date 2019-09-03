@@ -185,6 +185,8 @@ describe('Xelement lifeCycles', () => {
           setting an attribute with a new value SHOULD trigger a rerender
         */
         node.setAttribute('test-text', 'test2');
+
+
         await node._process;
 
         tests({
