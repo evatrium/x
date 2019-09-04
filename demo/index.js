@@ -4,6 +4,7 @@ import {extend} from "@iosio/util";
 
 import {obi} from "@iosio/obi";
 
+
 globalStyles(// language=CSS
         `    html {
             -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
@@ -22,12 +23,12 @@ globalStyles(// language=CSS
             flex-direction: column;
             flex: 1 0 auto;
         }
-        
+
         .asdf {
             color: pink;
         }
 
-        .poop {
+        .derp {
             background: purple;
         }
 
@@ -40,11 +41,37 @@ globalStyles(// language=CSS
 
 
 const Test = x('test', ({Host, name}) => (
-    <Host className={'poop'}>
+    <Host>
         <h1>say hello - name: {name} </h1>
     </Host>
 ), {name: String});
 
+
+const TestListItem = x('list-item', ({text}) => (
+    <div>
+        <b>{text}</b>
+        <slot/>
+    </div>
+), {text: String})
+
+
+const Lister = x('lister', class extends Xelement {
+
+    observe = obi(todos);
+
+    render({Host}) {
+        return (
+            <Host>
+                {todos.displayList.map((t) => (
+                    <TestListItem text={t.name} key={t.id}>
+                        <button onClick={() => todos.removeTodo(t)}>X</button>
+                    </TestListItem>
+                ))}
+
+            </Host>
+        )
+    }
+});
 
 export const App = x('app', class extends Xelement {
 
@@ -56,25 +83,7 @@ export const App = x('app', class extends Xelement {
     observe = obi(todos); // detects mutations on object values and triggers an update
 
 
-
-    willRender(props, state) {
-
-    }
-
-    didRender() {
-        // console.log('did render', this.shadowRoot.innerHTML)
-        // console.log(this.ref)
-    }
-
-    add = () => {
-
-        todos.addTodo();
-    };
-
-
     render({Host, ...props}, state) {
-
-        // console.log('rendered')
 
         const TextList = ({derp}) => (
             <Fragment>
@@ -143,18 +152,19 @@ export const App = x('app', class extends Xelement {
                 {state.bool && <Test name={todos.todoName} onClick={() => console.log('shit balls')}/>}
 
 
-                <button onClick={todos.makeABunch}> make a bunch</button>
+                <button onClick={todos.makeABunch}>
+                    make a bunch!!!
+                </button>
+                ... i dare you
 
 
+                <br/>
                 <br/>
 
                 <input ref={this.input} placeholder="add todo" value={todos.todoName}
                        onInput={(e) => todos.todoName = e.target.value}/>
 
-                <button onClick={() => {
-                    // todos.addTodo()
-                    this.add();
-                }} style="color:blue">
+                <button onClick={todos.addTodo} style="color:blue">
                     Add todo !!! :
                 </button>
 
@@ -167,27 +177,14 @@ export const App = x('app', class extends Xelement {
 
                     <div style="width:50%">
 
-                        <ul>
-
-                            {todos.displayList.map((t) => (
-                                <li key={t.id}>
-                                    {t.name}
-                                    <button onClick={() => todos.removeTodo(t)}>X</button>
-                                </li>
-                            ))}
-
-                        </ul>
+                        <Lister/>
 
                     </div>
 
 
-                    <div style="width:50%">
-
-
-                        <TextList derp={() => console.log('derp')}/>
-
-
-                    </div>
+                    {/*<div style="width:50%">*/}
+                        {/*<TextList derp={() => console.log('derp')}/>*/}
+                    {/*</div>*/}
 
 
                 </div>
