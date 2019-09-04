@@ -46,8 +46,9 @@ class Xelement extends HTMLElement {
 
     Host = (props, children) => {
         this._usingFrag = true;
-        for (let key in merge(props, this._hostElementProps))
+        for (let key in merge(props, this._hostElementProps)){
             patchProperty(this, key, this._hostElementProps[key], props[key]);
+        }
         this._hostElementProps = props;
         return h(FRAGMENT_TYPE, {}, children);
     };
@@ -99,7 +100,6 @@ class Xelement extends HTMLElement {
     };
 
     _subsequentRender = (...next) => {
-
         if (!(this.willRender())) {// returning true will prevent re render
             patch(this._usingFrag ? this._root : this._base, this.render(...next))
             this.didRender();

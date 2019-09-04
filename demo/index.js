@@ -22,7 +22,7 @@ globalStyles(// language=CSS
             flex-direction: column;
             flex: 1 0 auto;
         }
-
+        
         .asdf {
             color: pink;
         }
