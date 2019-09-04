@@ -59,16 +59,23 @@ const Lister = x('lister', class extends Xelement {
 
     observe = obi(todos);
 
+    /*
+        <TestListItem text={t.name} key={t.id}>
+                        <button onClick={() => todos.removeTodo(t)}>X</button>
+        </TestListItem>
+    */
+
     render({Host}) {
         return (
-            <Host>
+            <ul>
                 {todos.displayList.map((t) => (
-                    <TestListItem text={t.name} key={t.id}>
+                    <li  key={t.id}>
+                        <b>{t.name}</b>
                         <button onClick={() => todos.removeTodo(t)}>X</button>
-                    </TestListItem>
+                    </li>
                 ))}
 
-            </Host>
+            </ul>
         )
     }
 });
