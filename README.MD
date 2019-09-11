@@ -1,4 +1,4 @@
 
 **work in progress**
 
-heavily inspired by atomico, stencil, preact, open-wc and superfine
+inspiration driven by superfine, atomico, stencil, preact and open-wc
