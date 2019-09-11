@@ -146,20 +146,16 @@ describe('Xelement', () => {
 
         let {node, lightDomSnapshot, shadowSnapshot, select, click} = results;
 
+        expect(shadowSnapshot()).toBe('<span id="count">0</span><button id="testClass">testStyles</button><button id="testStyles">testClass</button><button id="inc">inc</button>')
 
         expect(lightDomSnapshot()).toBe(`<${tag} class="${USER_ASSIGNED_CLASS} testClass" style="${USER_ASSIGNED_STYLE} color: red;"></${tag}>`);
-
-
-        let counter = select('#count');
-
-        expect(counter.innerHTML).toBe('0');
-
 
         click('#inc');
 
         await node._process;
 
-        expect(counter.innerHTML).toBe('1');
+        expect(shadowSnapshot()).toBe('<span id="count">1</span><button id="testClass">testStyles</button><button id="testStyles">testClass</button><button id="inc">inc</button>')
+
 
         expect(lightDomSnapshot()).toBe(`<${tag} class="${USER_ASSIGNED_CLASS} testClass" style="${USER_ASSIGNED_STYLE} color: red;"></${tag}>`);
 
@@ -169,24 +165,28 @@ describe('Xelement', () => {
 
         expect(lightDomSnapshot()).toBe(`<${tag} class="${USER_ASSIGNED_CLASS}" style="${USER_ASSIGNED_STYLE} color: red;"></${tag}>`);
 
+        expect(shadowSnapshot()).toBe('<span id="count">1</span><button id="testClass">testStyles</button><button id="testStyles">testClass</button><button id="inc">inc</button>')
+
         click('#testClass');
 
         await node._process;
 
         expect(lightDomSnapshot()).toBe(`<${tag} class="${USER_ASSIGNED_CLASS} testClass" style="${USER_ASSIGNED_STYLE} color: red;"></${tag}>`);
+        expect(shadowSnapshot()).toBe('<span id="count">1</span><button id="testClass">testStyles</button><button id="testStyles">testClass</button><button id="inc">inc</button>')
 
         click('#testStyles');
 
         await node._process;
 
         expect(lightDomSnapshot()).toBe(`<${tag} class="${USER_ASSIGNED_CLASS} testClass" style="${USER_ASSIGNED_STYLE}"></${tag}>`);
+        expect(shadowSnapshot()).toBe('<span id="count">1</span><button id="testClass">testStyles</button><button id="testStyles">testClass</button><button id="inc">inc</button>')
 
         click('#testStyles');
 
         await node._process;
 
         expect(lightDomSnapshot()).toBe(`<${tag} class="${USER_ASSIGNED_CLASS} testClass" style="${USER_ASSIGNED_STYLE} color: red;"></${tag}>`);
-
+        expect(shadowSnapshot()).toBe('<span id="count">1</span><button id="testClass">testStyles</button><button id="testStyles">testClass</button><button id="inc">inc</button>')
 
         click('#testStyles');
 
@@ -195,6 +195,7 @@ describe('Xelement', () => {
         await node._process;
 
         expect(lightDomSnapshot()).toBe(`<${tag} class="${USER_ASSIGNED_CLASS}" style="${USER_ASSIGNED_STYLE}"></${tag}>`);
+        expect(shadowSnapshot()).toBe('<span id="count">1</span><button id="testClass">testStyles</button><button id="testStyles">testClass</button><button id="inc">inc</button>')
 
         done();
 

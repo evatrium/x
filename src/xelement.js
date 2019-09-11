@@ -24,7 +24,6 @@ let
 /*  heavily inspired by atomico, stencil, preact, open-wc and superfine */
 
 
-
 class Xelement extends HTMLElement {
 
     context = context;
@@ -48,7 +47,11 @@ class Xelement extends HTMLElement {
 
     Host = (props, children) => {
         this._usingFrag = true;
-        for (let key in merge(props, this._hostProps)) patchProperty(this, key, this._hostProps[key], props[key]);
+        let merged = merge(this._hostProps, props);
+        if (Object.keys(merged).length) {
+            for (let key in merged)
+                patchProperty(this, key, this._hostProps[key], props[key]);
+        }
         this._hostProps = props;
         return h(HOST_TYPE, {}, children);
     };
@@ -97,7 +100,7 @@ class Xelement extends HTMLElement {
 
         let postInitial = () => {
             /*
-             borrowed from stencil.js - adding visibility inherit next tick after render will prevent flash of un-styled content
+             inspired by stencil.js - adding visibility inherit next tick after render will prevent flash of un-styled content
              removing this functionality during testing makes life easier
             */
             !TEST_ENV && this.classList.add('___');
@@ -127,6 +130,7 @@ class Xelement extends HTMLElement {
         this[attrToProp(attr)] = newValue;
     }
 
+    /* inspired by atomico  */
     static get observedAttributes() {
         let {propTypes, prototype} = this;
         this._initAttrs = [];
