@@ -54,10 +54,10 @@ function formatXML(xmlString, indent) {
 let mapObjectToHTMLAttributes = (attributes) =>
     attributes ? Object.entries(attributes).reduce((previous, current) =>
         previous + ` ${current[0]}='${
-        
-        typeof current[1] === 'object' ?  JSON.stringify(current[1]) : current[1]
-        
-    }'`, ""
+
+            typeof current[1] === 'object' ? JSON.stringify(current[1]) : current[1]
+
+            }'`, ""
     ) : "";
 
 
@@ -77,11 +77,18 @@ export const mount = async ({tag, Component, mountPoint, attributes = {}, childr
 
     await node._mounted;
 
-    await till(); //wait till the visibility classname is added;
+    // await till(); //wait till the visibility classname is added;
+
+    let select = (selector) => node.shadowRoot.querySelector(selector);
+
+    let click = (selector) => select(selector).dispatchEvent(new CustomEvent('click', {bubbles: true, composed: true}));
+
 
     return {
         tag,
         mountPoint,
+        select,
+        click,
         node, // the actual web component reference
         shadowSnapshot: () => formatXML(node.shadowRoot.innerHTML), // '<h1></h1>' returns what is rendered inside the web component / slots
         lightDomSnapshot: () => mountPoint.innerHTML, //`<${tag} class="___"></${tag}>` returns the "light dom" / the web component tag and light dom children

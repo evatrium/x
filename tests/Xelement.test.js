@@ -63,26 +63,138 @@ describe('Xelement', () => {
         done();
     });
 
-
-    it('Host element behaves as expected', async (done) => {
+    it('Xelement re-renders correct content when state is updated', async (done) => {
 
         let tag = randomName();
 
         element(tag, class extends Xelement {
-            propTypes = {myProp: String};
 
-            render({Host}) {
-                return (<div>hello</div>)
+            state = {count: 0};
+
+            inc = () => this.setState({count: this.state.count + 1});
+
+            render(props, {count}) {
+                return (
+                    <div>
+
+                        <span id="count">{count}</span>
+
+                        <button id="inc" onClick={this.inc}>inc</button>
+
+                    </div>
+                )
             }
         });
 
-        let results = await mount({tag, attributes: {['my-prop']: 'hola'}});
+        let results = await mount({tag});
 
-        let {node, lightDomSnapshot, shadowSnapshot} = results;
+        let {node, select, click} = results;
 
-        expect(lightDomSnapshot()).toBe(`<${tag} my-prop="hola"></${tag}>`);
+        let counter = select('#count');
 
-        expect(shadowSnapshot()).toBe('<div>hello hola</div>');
+        expect(counter.innerHTML).toBe('0');
+
+        click('#inc');
+
+        await node._process;
+
+        expect(counter.innerHTML).toBe('1');
+
+        click('#inc');
+
+        await node._process;
+
+        expect(counter.innerHTML).toBe('2');
+
+        done();
+
+    });
+
+
+    it('Host element behaves as expected, and does not interfere with user assigned classNames and style properties', async (done) => {
+
+        let tag = randomName();
+
+        let USER_ASSIGNED_CLASS = 'userAssignedClass';
+        let USER_ASSIGNED_STYLE = 'border: 1px solid red;';
+
+
+        element(tag, class extends Xelement {
+
+            state = {applyClass: true, applyStyles: true, count: 0};
+
+            inc = () => this.setState(state => ({count: state.count + 1}));
+
+            toggleTestClass = () => this.setState(state => ({applyClass: !state.applyClass}));
+
+            toggleTestStyles = () => this.setState(state => ({applyStyles: !state.applyStyles}));
+
+            render({Host}, {applyClass, applyStyles, count}) {
+
+                return (
+                    <Host className={applyClass ? 'testClass' : null} style={applyStyles ? {color: 'red'} : null}>
+                        <span id="count">{count}</span>
+                        <button id="testClass" onClick={this.toggleTestClass}>testStyles</button>
+                        <button id="testStyles" onClick={this.toggleTestStyles}>testClass</button>
+                        <button id="inc" onClick={this.inc}>inc</button>
+                    </Host>
+                )
+            }
+        });
+
+        let results = await mount({tag, attributes: {'class': USER_ASSIGNED_CLASS, style: USER_ASSIGNED_STYLE}});
+
+        let {node, lightDomSnapshot, shadowSnapshot, select, click} = results;
+
+
+        expect(lightDomSnapshot()).toBe(`<${tag} class="${USER_ASSIGNED_CLASS} testClass" style="${USER_ASSIGNED_STYLE} color: red;"></${tag}>`);
+
+
+        let counter = select('#count');
+
+        expect(counter.innerHTML).toBe('0');
+
+
+        click('#inc');
+
+        await node._process;
+
+        expect(counter.innerHTML).toBe('1');
+
+        expect(lightDomSnapshot()).toBe(`<${tag} class="${USER_ASSIGNED_CLASS} testClass" style="${USER_ASSIGNED_STYLE} color: red;"></${tag}>`);
+
+        click('#testClass');
+
+        await node._process;
+
+        expect(lightDomSnapshot()).toBe(`<${tag} class="${USER_ASSIGNED_CLASS}" style="${USER_ASSIGNED_STYLE} color: red;"></${tag}>`);
+
+        click('#testClass');
+
+        await node._process;
+
+        expect(lightDomSnapshot()).toBe(`<${tag} class="${USER_ASSIGNED_CLASS} testClass" style="${USER_ASSIGNED_STYLE} color: red;"></${tag}>`);
+
+        click('#testStyles');
+
+        await node._process;
+
+        expect(lightDomSnapshot()).toBe(`<${tag} class="${USER_ASSIGNED_CLASS} testClass" style="${USER_ASSIGNED_STYLE}"></${tag}>`);
+
+        click('#testStyles');
+
+        await node._process;
+
+        expect(lightDomSnapshot()).toBe(`<${tag} class="${USER_ASSIGNED_CLASS} testClass" style="${USER_ASSIGNED_STYLE} color: red;"></${tag}>`);
+
+
+        click('#testStyles');
+
+        click('#testClass');
+
+        await node._process;
+
+        expect(lightDomSnapshot()).toBe(`<${tag} class="${USER_ASSIGNED_CLASS}" style="${USER_ASSIGNED_STYLE}"></${tag}>`);
 
         done();
 
