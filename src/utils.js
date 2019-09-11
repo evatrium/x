@@ -61,8 +61,8 @@ let d = document,
 
 
     propToAttr = (prop) => prop.replace(/([A-Z])/g, "-$1").toLowerCase(),
-    attrToProp = (attr) => attr.replace(/-(\w)/g, (all, letter) => letter.toUpperCase());
-
+    attrToProp = (attr) => attr.replace(/-(\w)/g, (all, letter) => letter.toUpperCase()),
+    TEST_ENV = process.env.NODE_ENV === 'test';
 
 webComponentVisibilityStyleSheet(` .___ {visibility: inherit;}`, true);
 
@@ -77,5 +77,6 @@ export {
     updateAttribute,
     propToAttr,
     attrToProp,
-    d
+    d,
+    TEST_ENV
 };

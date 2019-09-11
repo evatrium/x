@@ -8,13 +8,15 @@ export const randomName = () => {
 
 export const till = async (time) => new Promise(resolve => setTimeout(resolve, time || 300));
 
-
+/*
+    stack overflow format html string
+ */
 function formatXML(xmlString, indent) {
     indent = indent || "\t"; //can be specified by second argument of the function
 
     var tabs = "";  //store the current indentation
 
-    var result = xmlString.replace(
+    return xmlString.replace(
         /\s*<[^>\/]*>[^<>]*<\/[^>]*>|\s*<.+?>|\s*[^<]+/g, //pattern to match nodes (angled brackets or text)
         function (m, i) {
             m = m.replace(/^\s+|\s+$/g, "");  //trim the match just in case
@@ -42,17 +44,20 @@ function formatXML(xmlString, indent) {
 
             //return m+"\n";
             //"\n" +
-            return  m; //content has additional space(match) from header
+            return m; //content has additional space(match) from header
         }//anonymous function
-    );//replace
 
-    return result;
+    );//replace
 }
 
 
 let mapObjectToHTMLAttributes = (attributes) =>
     attributes ? Object.entries(attributes).reduce((previous, current) =>
-        previous + ` ${current[0]}="${current[1]}"`, ""
+        previous + ` ${current[0]}='${
+        
+        typeof current[1] === 'object' ?  JSON.stringify(current[1]) : current[1]
+        
+    }'`, ""
     ) : "";
 
 
@@ -62,7 +67,9 @@ export const mount = async ({tag, Component, mountPoint, attributes = {}, childr
 
     mountPoint = mountPoint || document.createElement("div");
 
-    mountPoint.innerHTML = (`<${tag} ${mapObjectToHTMLAttributes(attributes) || ""}>${children || ""}</${tag}>`);
+    let attrs = mapObjectToHTMLAttributes(attributes);
+
+    mountPoint.innerHTML = (`<${tag} ${attrs || ""}>${children || ""}</${tag}>`);
 
     document.body.appendChild(mountPoint);
 
@@ -75,9 +82,9 @@ export const mount = async ({tag, Component, mountPoint, attributes = {}, childr
     return {
         tag,
         mountPoint,
-        node,
-        shadowSnapshot: () => formatXML(node.shadowRoot.innerHTML),
-        lightDomSnapshot: () => mountPoint.innerHTML,
+        node, // the actual web component reference
+        shadowSnapshot: () => formatXML(node.shadowRoot.innerHTML), // '<h1></h1>' returns what is rendered inside the web component / slots
+        lightDomSnapshot: () => mountPoint.innerHTML, //`<${tag} class="___"></${tag}>` returns the "light dom" / the web component tag and light dom children
         slots: node.shadowRoot.querySelectorAll('slot'),
         getSlotContent: (slot_id = "slot-0", node) => node.shadowRoot.getElementById(slot_id).parentNode.innerHTML
     }

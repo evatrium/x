@@ -16,10 +16,9 @@ var removeChild = (parent, child) => parent.removeChild(child),
     map = EMPTY_ARR.map,
 
     //fragment type for host node
-    FRAGMENT_TYPE = '#document-fragment',
+    HOST_TYPE = '#document-fragment',
 
     Fragment = (props, children) => children,
-
 
 
     merge = (a, b, out) => {
@@ -40,9 +39,10 @@ var removeChild = (parent, child) => parent.removeChild(child),
         });
     },
 
-    /* ------------preact's style property */
+    /* ------------ preact's style property */
 
     IS_NON_DIMENSIONAL = /acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|zoo|^ord|^--/i,
+
     setStyle = (style, key, value) => {
         key[0] === '-' ? style.setProperty(key, value) :
             style[key] = typeof value === 'number' && IS_NON_DIMENSIONAL.test(key) === false ? value + 'px' : value;
@@ -87,18 +87,18 @@ var removeChild = (parent, child) => parent.removeChild(child),
             else if (!oldValue) addListener(node, key, listener);
         } else if (key === 'ref' && isFunc(newValue)) newValue(node);
         else if (key === 'style') styleNode(node, newValue, oldValue);
-        else if (key === 'className' || key === 'class'){
+        else if (key === 'className' || key === 'class') {
 
             updateClassList(node, oldValue, 'remove');
             updateClassList(node, newValue, 'add');
-        /*
-           In order to prevent initial style flashing/reflow of undefined web components
-           a style tag that is embedded in the html contains a class for all the custom element tags
-           which sets them to visibility hidden initially. Once the web component has rendered
-           it adds a class to its own classList to make it visibility inherit.
-           The following actually works great for avoiding the already defined class names that exist
-           on the component or defined by other means / internally or by some other component.
-        */
+            /*
+               In order to prevent initial style flashing/reflow of undefined web components
+               a style tag that is embedded in the html contains a class for all the custom element tags
+               which sets them to visibility hidden initially. Once the web component has rendered
+               it adds a class to its own classList to make it visibility inherit.
+               The following actually works great for avoiding the already defined class names that exist
+               on the component or defined by other means / internally or by some other component.
+            */
         } else if (!isSvg && key !== "list" && (key in node)) node[key] = newValue == null ? "" : newValue;
         else updateAttribute(node, key, newValue)
     },
@@ -122,11 +122,14 @@ var removeChild = (parent, child) => parent.removeChild(child),
                 : (vnode.name === '#document-fragment')
                     ? d.createDocumentFragment()
                     : createElement(vnode.name),
+
             props = vnode.props;
+
         for (var k in props) patchProperty(node, k, null, props[k], isSvg);
         for (var i = 0, len = vnode.children.length; i < len; i++) appendChild(node, createNode(vnode.children[i], isSvg));
         return (vnode.node = node)
     },
+
     getKey = (vnode) => vnode == null ? null : vnode.key,
     /*
        Looked at Atomico's code (which uses vdom in web components) and noticed the destroy method
@@ -277,9 +280,9 @@ var removeChild = (parent, child) => parent.removeChild(child),
                         newHead++
                     }
                 }
+
                 while (oldHead <= oldTail)
-                    if (getKey((oldVKid = oldVKids[oldHead++])) == null)
-                        removeChild(node, destroy(oldVKid.node));
+                    if (getKey((oldVKid = oldVKids[oldHead++])) == null) removeChild(node, destroy(oldVKid.node));
 
                 for (var i in keyed) if (newKeyed[i] == null) removeChild(node, destroy(keyed[i].node))
             }
@@ -322,5 +325,5 @@ var removeChild = (parent, child) => parent.removeChild(child),
             : createVNode(name, props, children, null, props.key)
     };
 
-export {patch, h, Fragment, removeHandlers, FRAGMENT_TYPE, patchProperty, merge}
+export {patch, h, Fragment, removeHandlers, HOST_TYPE, patchProperty, merge}
 

@@ -13,9 +13,9 @@
 	"files": [],
 	"keywords": [],
 	"scripts": {
-		"start": "es-dev-server",
-		"test": "karma start --single-run --browsers ChromeHeadless karma.conf.js",
-		"build": "rimraf lib && rollup -c rollup.config.lib.js"
+		"start": "NODE_ENV=development es-dev-server",
+		"test": "NODE_ENV=test karma start --single-run --browsers ChromeHeadless karma.conf.js",
+		"build": "NODE_ENV=production rimraf lib && rollup -c rollup.config.js"
 	},
 	"peerDependencies": {
 		"@iosio/obi": "0.0.6"

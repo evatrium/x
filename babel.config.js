@@ -1,5 +1,6 @@
+console.log('babel')
 module.exports = {
-    "presets": process.env.NODE_ENV === 'test' ? ["@babel/preset-env"] : [],
+    // "presets": process.env.NODE_ENV === 'test' ? ["@babel/preset-env"] : [],
     plugins: [
         ['@iosio/babel-plugin-jcss'],
         ["transform-inline-environment-variables"],

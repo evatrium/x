@@ -7,9 +7,9 @@ import {
     webComponentVisibility,
     createElement,
     appendChild,
-    d
+    TEST_ENV
 } from "../src/utils";
-import {h, patch, removeHandlers, FRAGMENT_TYPE, patchProperty, merge} from "./vdom";
+import {h, patch, removeHandlers, HOST_TYPE, patchProperty, merge} from "./vdom";
 
 let
     PROPS = Symbol(),
@@ -23,13 +23,15 @@ let
 
 /*  heavily inspired by atomico, stencil, preact and superfine */
 
+
+
 class Xelement extends HTMLElement {
 
     context = context;
 
     _unsubs = [];
 
-    _hostElementProps = {};
+    _hostProps = {};
 
     state = {};
 
@@ -46,11 +48,9 @@ class Xelement extends HTMLElement {
 
     Host = (props, children) => {
         this._usingFrag = true;
-        for (let key in merge(props, this._hostElementProps)){
-            patchProperty(this, key, this._hostElementProps[key], props[key]);
-        }
-        this._hostElementProps = props;
-        return h(FRAGMENT_TYPE, {}, children);
+        for (let key in merge(props, this._hostProps)) patchProperty(this, key, this._hostProps[key], props[key]);
+        this._hostProps = props;
+        return h(HOST_TYPE, {}, children);
     };
 
     connectedCallback() {
@@ -86,29 +86,41 @@ class Xelement extends HTMLElement {
     };
 
     _initialRender = (...next) => {
+
         this.willRender(...next);
         let results = this.render(...next),
             mountPoint = createElement(this._usingFrag ? 'template' : results.name);
+
         appendChild(this._root, mountPoint);
+
         this._base = patch(this._usingFrag ? this._root : mountPoint, results);
-        setTimeout(() => {
-            this.classList.add('___');
+
+        let postInitial = () => {
+            /*
+             borrowed from stencil.js - adding visibility inherit next tick after render will prevent flash of un-styled content
+             removing this functionality during testing makes life easier
+            */
+            !TEST_ENV && this.classList.add('___');
             this.didRender(...next);
-            this._unsubs.push(this.lifeCycle(...next));
-        });
-        this._has_mounted = true;
+            this._unsubs.push(this.lifeCycle());
+            this._has_mounted = true;
+        };
+
+        !TEST_ENV ? setTimeout(postInitial) : postInitial();
     };
 
+
     _subsequentRender = (...next) => {
-        if (!(this.willRender())) {// returning true will prevent re render
-            patch(this._usingFrag ? this._root : this._base, this.render(...next))
-            this.didRender();
-        }
+        let shouldRerender = this.willRender();// returning a falsy value other than undefined will prevent rerender
+        if (!shouldRerender && shouldRerender !== undefined) return;
+        patch(this._usingFrag ? this._root : this._base, this.render(...next));
+        this.didRender();
     };
-    emit = (name, detail, from) =>
-        (from || this).dispatchEvent(
-            new CustomEvent(name, {detail, bubbles: true, composed: true})
-        );
+    //
+    // emit = (name, detail, from) =>
+    //     (from || this).dispatchEvent(
+    //         new CustomEvent(name, {detail, bubbles: true, composed: true})
+    //     );
 
     attributeChangedCallback(attr, oldValue, newValue) {
         if (attr === this[IGNORE_ATTR] || oldValue === newValue) return;
@@ -182,6 +194,7 @@ const element = (tag, component, propTypes) => {
         );
         return (props, children) => h(tag, props, children);
     },
+
     x = (tag, component, propTypes) =>
         element('x-' + tag, component, propTypes);
 

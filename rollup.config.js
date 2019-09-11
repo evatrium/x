@@ -21,7 +21,8 @@ import pkg from './package.json';
         ...Object.keys(pkg.dependencies || {})
     ],
 
- */
+*/
+
 
 function external(id) {
     return !id.startsWith('.') && !id.startsWith('/');
@@ -35,7 +36,8 @@ function outputLib({file, format, min}) {
         UMD = format === 'umd',
         CJS = format === 'cjs';
 
-    let umdName = format === 'umd' ? {name: 'pwc'} : {};
+    let umdName = format === 'umd' ? {name: 'iosiox'} : {};
+
     return {
         input: "src/index.js",
         treeshake: true,

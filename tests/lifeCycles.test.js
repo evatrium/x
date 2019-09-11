@@ -1,13 +1,16 @@
 import {Xelement, element, x, h, Fragment, Host} from "../src";
-import {randomName, mount} from "./testUtils";
-import {till} from "./testUtils/testUtils";
+import {randomName, mount, till} from "./_testUtils";
+
+import {obi} from "@iosio/obi";
 
 
-var lifeCycles, tests, shouldNotRerender, tag, node;
+var lifeCycles, tests, shouldReRender, tag, node, observable;
 
 const createXelement = () => {
 
     let tag = randomName();
+
+    observable = obi({observableValue: 'hello'});
 
     element(tag, class extends Xelement {
 
@@ -15,28 +18,28 @@ const createXelement = () => {
             testText: {type: String, reflect: true, value: ''}
         };
 
+        observe = observable;
+
         state = {test: 'abc'};
 
         willRender() {
-            console.log('************ will render')
+            // console.log('************ will render');
             lifeCycles.willRender();
             // return 'some truthy value to indicate that a re-render should NOT take place'
-            return shouldNotRerender;
+            return shouldReRender;
         }
 
         didRender() {
-            console.log('************ did render')
+            // console.log('************ did render');
             lifeCycles.didRender();
-
         }
 
         lifeCycle() {
 
             lifeCycles.lifeCycle();
             this._unsubs.push(lifeCycles.unsubscribe) // adds 1 call to lifeCycle.unsubscribe
-            console.log(this._unsubs.length)
             return () => { // adds 1 call to lifeCycle.unsubscribe
-                console.log('******** will unmount')
+                // console.log('******** will unmount');
                 lifeCycles.willUnmount();
             }
         }
@@ -53,12 +56,12 @@ const createXelement = () => {
 };
 
 
-describe('Xelement lifeCycles', () => {
+xdescribe('Xelement lifeCycles', () => {
 
 
     beforeEach(function () {
 
-        shouldNotRerender = false;
+        shouldReRender = undefined;
 
 
         tag = createXelement();
@@ -85,11 +88,6 @@ describe('Xelement lifeCycles', () => {
 
 
         let {node} = await mount({tag});
-
-
-        // expect(lightDomSnapshot()).toBe(`<${tag} class="___"></${tag}>`);
-        //
-        // expect(shadowSnapshot()).toBe('<h1></h1>');
 
         tests({
             willRender: 1,
@@ -207,7 +205,7 @@ describe('Xelement lifeCycles', () => {
     });
 
 
-    it('returning a truthy value from willRender should prevent a re-render ', async (done) => {
+    it('returning a falsy value (other than undefined) from willRender() should prevent a re-render ', async (done) => {
 
         let {node} = await mount({tag});
 
@@ -216,7 +214,7 @@ describe('Xelement lifeCycles', () => {
              (hence - willRender will be called in order to return the value)
         */
 
-        shouldNotRerender = true;
+        shouldReRender = false;
 
         node.setAttribute('test-text', 'test1');
 
@@ -259,6 +257,7 @@ describe('Xelement lifeCycles', () => {
             unsubscribe: 0
         });
 
+        expect(node.state.test).toBe(123);
 
         node.remove();
 
@@ -266,6 +265,40 @@ describe('Xelement lifeCycles', () => {
         done();
 
     });
+
+
+
+    it('updating an observed value should trigger a rerender', async (done) => {
+
+        let {node} = await mount({tag});
+
+
+        observable.observableValue = 'updated';
+
+
+        await node._process;
+
+        tests({
+            willRender: 2,
+            render: 2,
+            didRender: 2,
+            lifeCycle: 1,
+            willUnmount: 0,
+            unsubscribe: 0
+        });
+
+        expect(node.observe.observableValue).toBe('updated');
+
+        node.remove();
+
+
+        done();
+
+    });
+
+
+
+
 
 
 
