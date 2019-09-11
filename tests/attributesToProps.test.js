@@ -43,7 +43,7 @@ const createXelement = ({propTypes = {}, renderFunc}) => {
 
 
 
-xdescribe('Xelement props', () => {
+describe('Xelement props', () => {
 
 
     beforeEach(function () {
@@ -137,7 +137,7 @@ xdescribe('Xelement props', () => {
 
 
 
-    it('ignores externally set attributes that are not declared as propTypes', async (done) => {
+    it('ignores externally set attributes that are not declared as propTypes / observedAttributes', async (done) => {
 
 
         const propTypes = {};

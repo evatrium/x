@@ -56,7 +56,7 @@ const createXelement = () => {
 };
 
 
-xdescribe('Xelement lifeCycles', () => {
+describe('Xelement lifeCycles', () => {
 
 
     beforeEach(function () {

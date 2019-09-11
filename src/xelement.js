@@ -1,4 +1,3 @@
-import {def, extend, isFunc} from '@iosio/util'
 import {
     formatType,
     updateAttribute,
@@ -7,12 +6,12 @@ import {
     webComponentVisibility,
     createElement,
     appendChild,
-    TEST_ENV
+    TEST_ENV,
+    def, extend, isFunc
 } from "../src/utils";
 import {h, patch, removeHandlers, HOST_TYPE, patchProperty, merge} from "./vdom";
 
-let
-    PROPS = Symbol(),
+let PROPS = Symbol(),
     // PROPS = 'props',
     IGNORE_ATTR = Symbol(),
     context = {};
@@ -100,8 +99,8 @@ class Xelement extends HTMLElement {
 
         let postInitial = () => {
             /*
-             inspired by stencil.js - adding visibility inherit next tick after render will prevent flash of un-styled content
-             removing this functionality during testing makes life easier
+             inspired by stencil.js - adding visibility inherit next tick after render will prevent flash of un-styled content.
+             Removing this functionality during testing makes life easier
             */
             !TEST_ENV && this.classList.add('___');
             this.didRender(...next);

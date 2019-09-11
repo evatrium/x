@@ -82,6 +82,8 @@ function outputLib({file, format, min}) {
                 },
                 compress: {
                     passes: 10,
+                    drop_console: true,
+                    module: min
                 }
             }),
             sizes()

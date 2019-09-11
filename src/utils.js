@@ -1,5 +1,3 @@
-import {isObj, isArray} from "@iosio/util";
-
 let d = document,
     createElement = (elem) => d.createElement(elem),
     appendChild = (node, child) => node.appendChild(child),
@@ -62,7 +60,25 @@ let d = document,
 
     propToAttr = (prop) => prop.replace(/([A-Z])/g, "-$1").toLowerCase(),
     attrToProp = (attr) => attr.replace(/-(\w)/g, (all, letter) => letter.toUpperCase()),
-    TEST_ENV = process.env.NODE_ENV === 'test';
+
+    TEST_ENV = process.env.NODE_ENV === 'test',
+
+
+    isArray = Array.isArray,
+    isObj = (thing) => !isArray(thing) && typeof thing === 'object',
+    isFunc = (thing) => typeof thing === 'function',
+    isString = (thing) => typeof thing === 'string',
+    addListener = (to, ev, cb) => to.addEventListener(ev, cb),
+    removeListener = (from, ev, cb) => from.removeEventListener(ev, cb),
+    def = (obj, prop, handlers) => Object.defineProperty(obj, prop, handlers),
+    extend = (obj, props) => {
+        for (let i in props) obj[i] = props[i];
+        return obj
+    },
+    asdf = '!@#$!@#$!@#$!@#$!@#$',
+    test = (derp) => derp[asdf];
+
+    console.log(asdf);
 
 webComponentVisibilityStyleSheet(` .___ {visibility: inherit;}`, true);
 
@@ -78,5 +94,14 @@ export {
     propToAttr,
     attrToProp,
     d,
-    TEST_ENV
+    TEST_ENV,
+    isArray,
+    isObj,
+    isFunc,
+    isString,
+    addListener,
+    removeListener,
+    def,
+    extend,
+    test
 };
