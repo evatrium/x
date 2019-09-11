@@ -21,7 +21,7 @@ let
 // --- yeah, prop not gonna even bother with internet explorer...
 // styles can't be dynamically updated in the render func, the docs say to use custom properties only
 
-/*  heavily inspired by atomico, stencil, preact and superfine */
+/*  heavily inspired by atomico, stencil, preact, open-wc and superfine */
 
 
 
