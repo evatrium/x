@@ -41,7 +41,7 @@ function outputLib({file, format, min}) {
     return {
         input: "src/index.js",
         treeshake: true,
-        external,
+        // external,
         output: {
             file,
             format,

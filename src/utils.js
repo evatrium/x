@@ -65,7 +65,7 @@ let d = document,
 
 
     isArray = Array.isArray,
-    isObj = (thing) => !isArray(thing) && typeof thing === 'object',
+    isObj = (thing) => Object.prototype.toString.call(thing) === '[object Object]',
     isFunc = (thing) => typeof thing === 'function',
     isString = (thing) => typeof thing === 'string',
     addListener = (to, ev, cb) => to.addEventListener(ev, cb),
