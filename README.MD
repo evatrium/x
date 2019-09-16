@@ -39,33 +39,37 @@ export const ColorComponent = x('color-component',
 or use class components
 
 ```js
-import {h, Xelement} from '@iosio/x';
+import {
+    h, 
+    Xelement,
+    x, 
+    // element
+} from '@iosio/x';
 
 // x will auto prepend your tagname with x- ...but you can import element to use whatever
 export const App = x('app', class extends Xelement {
 
     //set the propTypes for your observedAttributes
-    //will convert the attributes to the types you have defined here and then pass them to props
+    //the incoming attributes will be converted to the types you have defined here and then passed to props
     static propTypes = {some: String, cool: Boolean, prop: Number, types: Object, arrrrr: Array};
 
     state = {bool: true};
 
     observe = obi(todos); //global state reactivity ... more on this soon
     
-    // component will update
-    // before render
+    // before render (componentWillUpdate)
     willRender(){
         // return false // return any falsy value other than undefined to prevent re-renderng 
     } 
     
-    // component did update
-    // after render
+    // after render (componentDidUpdate)
     didRender(){} 
 
-    // component did mount
+    // (componentDidMount => componentWillUnmount)
     lifeCycle(){ 
         console.log('component mounted')
-        return ()=>{ // component will unmount
+        
+        return ()=>{ // called when the component unmounts
             // unsubcribe subscriptions here
             console.log('unmounted')
         }
