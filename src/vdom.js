@@ -9,14 +9,16 @@ import {
     isString,
     isArray,
     removeListener,
-    addListener
+    addListener,
+    objectIsEmpty,
+    toLowerCase,
+    COMPONENT_VISIBLE_CLASSNAME
 } from "./utils";
 
 // modified version of https://github.com/jorgebucaran/superfine
 
 var removeChild = (parent, child) => parent.removeChild(child),
     insertBefore = (parent, node, targetNode) => parent.insertBefore(node, targetNode),
-    toLowerCase = (toLower) => toLower.toLowerCase(),
     RECYCLED_NODE = 1,
     TEXT_NODE = 3,
     EMPTY_OBJ = {},
@@ -29,7 +31,6 @@ var removeChild = (parent, child) => parent.removeChild(child),
 
     Fragment = (props, children) => children,
 
-
     merge = (a, b, out) => {
         out = {};
         for (var k in a) out[k] = a[k];
@@ -40,11 +41,21 @@ var removeChild = (parent, child) => parent.removeChild(child),
     listener = function (event) {
         this.handlers[event.type](event)
     },
+
+    remHandle = node => {
+        if (!objectIsEmpty(node.handlers)) {
+            for (let k in node.handlers) {
+                removeListener(node, k, listener);
+                delete node.handlers[k]
+            }
+        }
+    },
     /* used inside web component disconnect callback*/
-    removeHandlers = (dom) => {
-        [].concat(...dom.childNodes).forEach(c => {
-            if (c.handlers) for (let k in c.handlers) removeListener(c, k, listener);
-            removeHandlers(c);
+    removeHandlers = dom => {
+        remHandle(dom);
+        [].concat(...dom.childNodes).forEach(child => {
+            remHandle(child)
+            removeHandlers(child);
         });
     },
 
@@ -78,11 +89,14 @@ var removeChild = (parent, child) => parent.removeChild(child),
     parseClassList = (value) => (!value) ? [] : value.split(/\s+/).filter(c => c),
 
     updateClassList = (node, value, action) =>
-        parseClassList(isObj(value) ? cnObj(value) : value).forEach(cls => node.classList[action](cls)),
+        parseClassList(isObj(value) ? cnObj(value) : value).forEach(cls => {
+            COMPONENT_VISIBLE_CLASSNAME !== cls && node.classList[action](cls)
+        }),
+
 
     patchProperty = (node, key, oldValue, newValue, isSvg) => {
         if (key === "key") {
-        } else if (isFunc(newValue) && key.startsWith('on') && !(key in node)) {
+        } else if (key.startsWith('on') && !(key in node)) {
             /*
                 referencing stencil's set accessor functionality for many kinds of 'on'-event names
                 cuz "custom" event names defined by the user within web components may also start with 'on' like onMyCustomEvent
@@ -91,13 +105,14 @@ var removeChild = (parent, child) => parent.removeChild(child),
             let eventType = (toLowerCase(key) in node)
                 ? toLowerCase(key.slice(2))
                 : toLowerCase(key[2]) + key.substring(3);
-            if (!((node.handlers || (node.handlers = {}))[(key = eventType)] = newValue))
-                removeListener(node, key, listener);
-            else if (!oldValue) addListener(node, key, listener);
-        } else if (key === 'ref' && isFunc(newValue)) newValue(node);
+            if (newValue) {
+                if (!oldValue) addListener(node, eventType, listener);
+                (node.handlers || (node.handlers = {}))[eventType] = newValue
+            } else removeListener(node, eventType, listener)
+
+        } else if (key === 'ref') isFunc(newValue) ? newValue(node) : newValue = node;
         else if (key === 'style') styleNode(node, newValue, oldValue);
         else if (key === 'className' || key === 'class') {
-
             updateClassList(node, oldValue, 'remove');
             updateClassList(node, newValue, 'add');
             /*
@@ -146,7 +161,11 @@ var removeChild = (parent, child) => parent.removeChild(child),
        nodes aren't being looked over???? checked the handlers and they were'nt being removed so i added
        this to clean things up.
      */
-    destroy = (dom) => (dom._destroy && dom._destroy(dom), dom),
+    destroy = (dom) => {
+        removeHandlers(dom);
+        dom.destroy && dom.destroy(dom);
+        return dom;
+    },
 
     patchNode = (parent, node, oldVNode, newVNode, isSvg) => {
 
@@ -177,7 +196,7 @@ var removeChild = (parent, child) => parent.removeChild(child),
             isSvg = isSvg || newVNode.name === "svg";
 
             for (var key in merge(oldVProps, newVProps)) {
-                let _old = oldVProps[key], _new = newVProps[key];
+                var _old = oldVProps[key], _new = newVProps[key];
 
                 if ((['value', 'selected', 'checked'].includes(key) ? node[key] : _old) !== _new) {
                     patchProperty(node, key, _old, _new, isSvg)
@@ -311,6 +330,7 @@ var removeChild = (parent, child) => parent.removeChild(child),
             NULL,
             RECYCLED_NODE
             ),
+
     patch = (node, vdom) => (
         ((node = patchNode(
             node.parentNode,

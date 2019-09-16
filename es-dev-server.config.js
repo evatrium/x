@@ -6,7 +6,7 @@ module.exports = {
   appIndex: 'index.html',
   moduleDirs: ['node_modules'],
   // http2:true,
-  compatibility: 'all',
+  compatibility: 'modern',
   // basePath: '/',
   // rootDir: '../',
 };

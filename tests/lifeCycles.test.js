@@ -63,9 +63,7 @@ describe('Xelement lifeCycles', () => {
 
         shouldReRender = undefined;
 
-
         tag = createXelement();
-
 
         lifeCycles = jasmine.createSpyObj('lifeCycles',
             ['willRender', 'render', 'didRender', 'lifeCycle', 'willUnmount', 'unsubscribe']

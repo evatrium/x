@@ -2,6 +2,8 @@ let d = document,
     createElement = (elem) => d.createElement(elem),
     appendChild = (node, child) => node.appendChild(child),
     createTextNode = (text) => d.createTextNode(text),
+    toLowerCase = (toLower) => toLower.toLowerCase(),
+    toUpperCase = (toUpper) => toUpper.toUpperCase(),
     /**
      * creates a single style sheet. returns a function to update the same sheet
      * @param {node|| null} mount - pass the node to mount the style element to defaults to document head
@@ -46,7 +48,7 @@ let d = document,
     },
     /**
      * will set or remove the attribute based on the truthyness of the value.
-     * if the type of value === object (accounts for array) and the node is a custom element, it will json stringify the value
+     * if the type of value is object or array and the node is a custom element, it will json stringify the value
      * @param node
      * @param attr
      * @param value
@@ -58,10 +60,10 @@ let d = document,
     },
 
 
-    propToAttr = (prop) => prop.replace(/([A-Z])/g, "-$1").toLowerCase(),
-    attrToProp = (attr) => attr.replace(/-(\w)/g, (all, letter) => letter.toUpperCase()),
+    propToAttr = (prop) => toLowerCase(prop.replace(/([A-Z])/g, "-$1")),
+    attrToProp = (attr) => attr.replace(/-(\w)/g, (all, letter) => toUpperCase(letter)),
 
-    TEST_ENV = process.env.NODE_ENV === 'test',
+
 
 
     isArray = Array.isArray,
@@ -75,14 +77,32 @@ let d = document,
         for (let i in props) obj[i] = props[i];
         return obj
     },
-    asdf = '!@#$!@#$!@#$!@#$!@#$',
-    test = (derp) => derp[asdf];
+    propsChanged = (a, b) => {
+        a = a || {};
+        b = b || {};
+        for (let i in a) if (!(i in b)) return true
+        for (let i in b) if (a[i] !== b[i]) return true
+        return false
+    },
+    objectIsEmpty = obj => Object.keys(obj || {}).length === 0,
+    // CSSTextToObj = cssText => {
+    //     var style = {},
+    //         cssToJs = s => s.startsWith('-') ? s : s.replace(/\W+\w/g, match => toUpperCase(match.slice(-1))),
+    //         properties = cssText.split(";").map(o => o.split(":").map(x => x && x.trim()));
+    //     for (var [property, value] of properties){
+    //         let prop = cssToJs(property);
+    //         if(prop)style[prop] = value;
+    //     }
+    //     return style
+    // },
+    TEST_ENV = process.env.NODE_ENV === 'test',
+    COMPONENT_VISIBLE_CLASSNAME = '___';
 
-    console.log(asdf);
 
-webComponentVisibilityStyleSheet(` .___ {visibility: inherit;}`, true);
+webComponentVisibilityStyleSheet(` .${COMPONENT_VISIBLE_CLASSNAME} {visibility: inherit;}`, true);
 
 export {
+    toLowerCase,
     createElement,
     createTextNode,
     appendChild,
@@ -103,5 +123,55 @@ export {
     removeListener,
     def,
     extend,
-    test
+    propsChanged,
+    objectIsEmpty,
+    // CSSTextToObj,
+    COMPONENT_VISIBLE_CLASSNAME
 };
+
+
+/*
+function CSSTextToObj(cssText) {
+    var cssTxt = cssText.replace(/\/\*(.|\s)*?\*\//g, " ").replace(/\s+/g, " ");
+    var style = {},
+        [,ruleName,rule] = cssTxt.match(/ ?(.*?) ?{([^}]*)}/)||[,,cssTxt];
+
+    var cssToJs = s => s.replace(/\W+\w/g, match => match.slice(-1).toUpperCase());
+
+    var properties = rule.split(";").map(o => o.split(":").map(x => x && x.trim()));
+
+    for (var [property, value] of properties) style[cssToJs(property)] = value;
+    return {cssText, ruleName, style};
+}
+
+
+
+    addDash = attr => {
+        while (attr.indexOf('-') > 0) { // - is in the attribute name, but is not the first character either
+            var afterDash = attr.substring(attr.indexOf('-') + 1)
+            afterDash = afterDash.substring(0, 1).toUpperCase() + afterDash.substring(1)
+            attr = attr.substring(0, attr.indexOf('-')) + afterDash
+        }
+        return attr
+    },
+    cssStringToObj = (str) => {
+        let _out = {};
+        str = str || '';
+        str.split(';').forEach(string => {
+            if (string !== '') {
+                var attr = string.split(':');
+                let attrName;
+                if (attr.length > 2) {
+                    attrName = attr.shift();
+                    attrName = addDash(attrName);
+                    _out[attrName] = attr.join(':')
+                } else {
+                    attrName = addDash(attr[0]);
+                    _out[attrName] = attr[1]
+                }
+            }
+        });
+        return _out;
+    };
+
+ */

@@ -52,7 +52,7 @@ class Xelement extends HTMLElement {
         if (Object.keys(merged).length) {
             for (let key in merged) patchProperty(this, key, this._hostProps[key], props[key]);
         }
-        this._hostProps = props;
+        this._selfProps = props;
         return h(HOST_TYPE, {}, children);
     };
 

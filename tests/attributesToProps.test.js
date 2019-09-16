@@ -99,7 +99,7 @@ describe('Xelement props', () => {
 
             tag: createXelement({
                 propTypes,
-                renderFunc:({Host, ...props})=>{
+                renderFunc:({Host, CSS, host, ...props})=>{
                     expectedCalls.renderedAttributesToProps(props);
                     return <Host>{JSON.stringify(props)}</Host>
                 }
@@ -156,7 +156,7 @@ describe('Xelement props', () => {
 
             tag: createXelement({
                 propTypes,
-                renderFunc:({Host, ...props})=>{
+                renderFunc:({Host, CSS, host, ...props})=>{
                     expectedCalls.renderedAttributesToProps(props);
                     return <Host></Host>
                 }
@@ -226,7 +226,7 @@ describe('Xelement props', () => {
 
             tag: createXelement({
                 propTypes,
-                renderFunc:({Host, ...props})=>{
+                renderFunc:({Host, CSS, host, ...props})=>{
                     expectedCalls.renderedAttributesToProps(props);
                     return <Host>{JSON.stringify(props)}</Host>
                 }

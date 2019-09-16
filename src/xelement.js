@@ -7,20 +7,24 @@ import {
     createElement,
     appendChild,
     TEST_ENV,
-    def, extend, isFunc
+    def, extend, isFunc,
+    COMPONENT_VISIBLE_CLASSNAME
 } from "../src/utils";
+
 import {h, patch, removeHandlers, HOST_TYPE, patchProperty, merge} from "./vdom";
+
 
 let PROPS = Symbol(),
     // PROPS = 'props',
     IGNORE_ATTR = Symbol(),
-    context = {};
+    context = {},
+    adoptedCSS = "adoptedStyleSheets" in document;
 
 // let shady = window.ShadyCSS;
 // --- yeah, prop not gonna even bother with internet explorer...
 // styles can't be dynamically updated in the render func, the docs say to use custom properties only
 
-/*  inspiration driven by superfine, atomico, stencil, preact and open-wc */
+/* inspiration driven by superfine, atomico, stencil, preact and open-wc */
 
 
 class Xelement extends HTMLElement {
@@ -29,43 +33,53 @@ class Xelement extends HTMLElement {
 
     _unsubs = [];
 
-    _hostProps = {};
-
     state = {};
 
     constructor() {
         super();
-        this.attachShadow({mode: 'open'});
-        this._root = (this.shadowRoot || this);
+        this._root = this.attachShadow({mode: 'open'});//  (this.shadowRoot || this) maybe eventually include the option to not use shadowDom
         this[PROPS] = {};
         this.render = this.render.bind(this);
         this._mounted = new Promise(mount => (this._mount = mount));
         this.update();
-        let {_initAttrs} = this.constructor;
+        let {_initAttrs, _rootSheet} = this.constructor;
         let length = _initAttrs.length;
         while (length--) _initAttrs[length](this);
+
+        if (adoptedCSS) this._root.adoptedStyleSheets = [_rootSheet];
+
+        this.CSS = ({updatable, css}, children) => {
+            let cssText = css || children;
+            if (!cssText) return null;
+            if (!adoptedCSS) return <style>{cssText}</style>;
+            else if (_rootSheet.cssRules.length === 0) _rootSheet.replaceSync(cssText);
+            return null;
+        }
     }
 
-    Host = (props, children) => {
+    Host = (selfProps, children) => {
         this._usingFrag = true;
-        let merged = merge(this._hostProps, props);
-        if (Object.keys(merged).length) {
-            for (let key in merged) patchProperty(this, key, this._hostProps[key], props[key]);
+        let hostNodeProps = {}, i = 0, a = this.attributes;
+        for (i = a.length; i--;) {
+            let attr = a[i].name;
+            hostNodeProps[attr === 'class' ? 'className' : attr] = a[i].value;
         }
-        this._hostProps = props;
+        // this._mounted.then(() => {
+        for (let key in selfProps) {
+            patchProperty(this, key, hostNodeProps[key], selfProps[key]);
+        }
+        // });
         return h(HOST_TYPE, {}, children);
     };
 
     connectedCallback() {
-        console.log('ive connected!!!', this._has_mounted, this.isConnected)
         if (this._has_mounted) return;
-        // shady && shady.styleElement(this);
         this.state.$onChange && this._unsubs.push(this.state.$onChange(this.update));
         this.observe && this.observeObi(this.observe);
         this._mount();
     }
 
-    setState = (nextState) => {
+    setState = nextState => {
         extend(this.state, isFunc(nextState) ? nextState(this.state) : nextState || {});
         this.update();
     };
@@ -75,62 +89,46 @@ class Xelement extends HTMLElement {
 
     update = () => {
         if (!this._process) {
-            this._process = this._mounted.then((next) => {
-                next = [extend({Host: this.Host}, this[PROPS]), this.state, this.context];
-                !this._has_mounted
-                    ? this._initialRender(...next)
-                    : this._subsequentRender(...next);
-                // shady && shady.styleSubtree(this);
+            this._process = this._mounted.then(_ => {
+                !this._has_mounted ? this._initialRender() : this._subsequentRender();
                 this._process = false;
             });
         }
         return this._process;
     };
 
-    adoptedCallback(){
-        console.log('ive been adopted!!')
-    }
+    _renderArgs = () => [extend({Host: this.Host, CSS: this.CSS, host: this}, this[PROPS]), this.state, this.context];
 
-    _initialRender = (...next) => {
-
+    /*adding visibility inherit next tick after render will prevent flash of un-styled content. (inspired by stencil.js)
+     Removing this functionality during testing makes life easier  */
+    _initialRender = () => {
+        let next = this._renderArgs();
         this.willRender(...next);
-
-        let results = this.render(...next),
-
-            mountPoint = createElement(this._usingFrag ? 'template' : results.name);
-
+        let results = this.render(...next);
+        let mountPoint = createElement(this._usingFrag ? 'template' : results.name);
         appendChild(this._root, mountPoint);
-
         this._base = patch(this._usingFrag ? this._root : mountPoint, results);
-
         this.didRender(...next);
-
         this._has_mounted = true;
-
         let postInitial = () => {
             this._unsubs.push(this.lifeCycle());
-            /*
-             inspired by stencil.js - adding visibility inherit next tick after render will prevent flash of un-styled content.
-             Removing this functionality during testing makes life easier
-            */
-            !TEST_ENV && this.classList.add('___');
+            !TEST_ENV && this.classList.add(COMPONENT_VISIBLE_CLASSNAME);
         };
-
-        !TEST_ENV ? setTimeout(postInitial) : postInitial();
+        !TEST_ENV ? requestAnimationFrame(postInitial) : postInitial();
     };
 
-
-    _subsequentRender = (...next) => {
+    _subsequentRender = () => {
+        let next = this._renderArgs();
         let shouldRerender = this.willRender();// returning a falsy value other than undefined will prevent rerender
         if (!shouldRerender && shouldRerender !== undefined) return;
         patch(this._usingFrag ? this._root : this._base, this.render(...next));
-        this.didRender();
+        this.didRender(...next);
     };
-    //
-    // emit = (name, detail, from) =>
-    //     (from || this).dispatchEvent(
-    //         new CustomEvent(name, {detail, bubbles: true, composed: true})
-    //     );
+
+    emit = (name, detail, from) => (from || this).dispatchEvent(
+        new CustomEvent(name, {detail, bubbles: true, composed: true})
+    );
+
 
     attributeChangedCallback(attr, oldValue, newValue) {
         if (attr === this[IGNORE_ATTR] || oldValue === newValue) return;
@@ -184,24 +182,33 @@ class Xelement extends HTMLElement {
     }
 
     disconnectedCallback() {
-        !this._destroyed && this._destroy();
+        !this.isConnected && !this._destroyed && this.destroy();
     }
 
-    _destroy = (dom) => {
-        dom && removeHandlers(dom);
-        this._unsubs.forEach(fn => fn && fn());
-        this._destroyed = true;
+    destroy = (dom) => {
+        if (!this._destroyed) {
+            dom && removeHandlers(dom);
+            this._unsubs.forEach(fn => isFunc(fn) && fn());
+            this._destroyed = true;
+        }
     };
 }
 
+
 const element = (tag, component, propTypes) => {
+
         webComponentVisibility(tag);
+
+        const rootSheet = adoptedCSS && new CSSStyleSheet(),
+            isXelment = component.prototype instanceof Xelement;
+        if (isXelment) component._rootSheet = rootSheet;
+
         customElements.define(tag,
-            component.prototype instanceof Xelement ? component :
-                class extends Xelement {
-                    static propTypes = propTypes;
-                    render = component;
-                }
+            isXelment ? component : class extends Xelement {
+                static propTypes = propTypes;
+                static _rootSheet = rootSheet;
+                render = component
+            }
         );
         return (props, children) => h(tag, props, children);
     },
@@ -209,240 +216,19 @@ const element = (tag, component, propTypes) => {
     x = (tag, component, propTypes) =>
         element('x-' + tag, component, propTypes);
 
-export {Xelement, x, element, context}
-
-
-
-
-
-
-
-
-
-/**
- *
- *  abandoning the use of superfine (above) in favor of preact... see the pwc repo
- *  bellow verifies that preact works
- *  will be continuing dev in my pwc (preact web component) repo
- */
-
-
-
-
-
-
-
-
+export {Xelement, x, element, context};
 
 
 //
-// import {
-//     formatType,
-//     updateAttribute,
-//     propToAttr,
-//     attrToProp,
-//     webComponentVisibility,
-//     createElement,
-//     appendChild,
-//     TEST_ENV,
-//     def, extend, isFunc
-// } from "../src/utils";
-// import {h, render, Fragment, Component} from "preact";
+// if(key === 'style'){
+//     let hostNodeStyleObj = CSSTextToObj(this.style.cssText);
+//     let selfStyleObj = isObj(selfProps.style) ? selfProps.style : CSSTextToObj(selfProps.style);
 //
-// import { patch, removeHandlers, HOST_TYPE, patchProperty, merge} from "./vdom";
-//
-// let PROPS = Symbol(),
-//     // PROPS = 'props',
-//     IGNORE_ATTR = Symbol(),
-//     context = {};
-//
-//
-// class Xelement extends HTMLElement {
-//
-//     context = context;
-//
-//     _unsubs = [];
-//
-//     _hostProps = {};
-//
-//     state = {};
-//
-//     constructor() {
-//         super();
-//         this.attachShadow({mode: 'open'});
-//         this._root = (this.shadowRoot || this);
-//         this[PROPS] = {};
-//         this.render = this.render.bind(this);
-//         this._mounted = new Promise(mount => (this._mount = mount));
-//         this.update();
-//         let {_initAttrs} = this.constructor;
-//         let length = _initAttrs.length;
-//         while (length--) _initAttrs[length](this);
-//     }
-//
-//     Host = ({children, ...props}) => {
-//         // this._usingFrag = true;
-//         // let merged = merge(this._hostProps, props);
-//         // if (Object.keys(merged).length) {
-//         //     for (let key in merged) patchProperty(this, key, this._hostProps[key], props[key]);
-//         // }
-//         // this._hostProps = props;
-//         // // return h(HOST_TYPE, {}, props.children);
-//         return <Fragment>{children}</Fragment>;
-//     };
-//
-//     connectedCallback() {
-//         // console.log('ive connected!!!', this._has_mounted, this.isConnected)
-//         if (this._has_mounted) return;
-//         // shady && shady.styleElement(this);
-//         this.state.$onChange && this._unsubs.push(this.state.$onChange(this.update));
-//         this.observe && this.observeObi(this.observe);
-//         this._mount();
-//     }
-//
-//     setState = (nextState) => {
-//         extend(this.state, isFunc(nextState) ? nextState(this.state) : nextState || {});
-//         this.update();
-//     };
-//
-//     observeObi = (...obis) =>
-//         obis.forEach(obi => obi.$onChange && this._unsubs.push(obi.$onChange(this.update)));
-//
-//     update = () => {
-//         if (!this._process) {
-//             this._process = this._mounted.then((next) => {
-//                 next = [extend({Host: this.Host}, this[PROPS]), this.state, this.context];
-//                 // console.log('has mounted', this._has_mounted);
-//                 !this._has_mounted
-//                     ? this._initialRender(...next)
-//                     : this._subsequentRender(...next);
-//                 // shady && shady.styleSubtree(this);
-//                 this._process = false;
-//             });
-//         }
-//         return this._process;
-//     };
-//
-//     adoptedCallback(){
-//         console.log('ive been adopted!!')
-//     }
-//
-//     _initialRender = (...next) => {
-//
-//         this.willRender(...next);
-//
-//         let results =this.render(...next);
-//
-//
-//             render(results, this.shadowRoot);
-//
-//         // console.log('results', results)
-//         this.didRender(...next);
-//
-//         this._has_mounted = true;
-//
-//         let postInitial = () => {
-//             this._unsubs.push(this.lifeCycle());
-//             /*
-//              inspired by stencil.js - adding visibility inherit next tick after render will prevent flash of un-styled content.
-//              Removing this functionality during testing makes life easier
-//             */
-//             !TEST_ENV && this.classList.add('___');
-//         };
-//
-//         !TEST_ENV ? requestAnimationFrame(postInitial) : postInitial();
-//     };
-//
-//
-//     _subsequentRender = (...next) => {
-//         let shouldRerender = this.willRender();// returning a falsy value other than undefined will prevent rerender
-//         if (!shouldRerender && shouldRerender !== undefined) return;
-//         render(this.render(...next), this._root);
-//         this.didRender();
-//     };
-//     //
-//     // emit = (name, detail, from) =>
-//     //     (from || this).dispatchEvent(
-//     //         new CustomEvent(name, {detail, bubbles: true, composed: true})
-//     //     );
-//
-//     attributeChangedCallback(attr, oldValue, newValue) {
-//         if (attr === this[IGNORE_ATTR] || oldValue === newValue) return;
-//         this[attrToProp(attr)] = newValue;
-//     }
-//
-//     /* inspired by atomico  */
-//     static get observedAttributes() {
-//         let {propTypes, prototype} = this;
-//         this._initAttrs = [];
-//         if (!propTypes) return [];
-//         return Object.keys(propTypes).map(prop => {
-//             let attr = propToAttr(prop),
-//                 schema = propTypes[prop].name ? {type: propTypes[prop]} : propTypes[prop];
-//             if (!(prop in prototype)) {
-//                 def(prototype, prop, {
-//                     get() {
-//                         return this[PROPS][prop]
-//                     },
-//                     set(nextValue) {
-//                         let {value, error} = formatType(nextValue, schema.type);
-//                         if (error && value != null) throw `[${prop}] must be type [${schema.type.name}]`;
-//                         if (value === this[PROPS][prop]) return;
-//                         if (schema.reflect) {
-//                             this._mounted.then(() => {
-//                                 this[IGNORE_ATTR] = attr;
-//                                 updateAttribute(this, attr, schema.type === Boolean && !value ? null : value);
-//                                 this[IGNORE_ATTR] = false;
-//                             });
-//                         }
-//                         this[PROPS][prop] = value;
-//                         this.update();
-//                     }
-//                 });
-//             }
-//             schema.value && this._initAttrs.push(self => (self[prop] = schema.value));
-//             return attr;
-//         });
-//     };
-//
-//     lifeCycle() {
-//     }
-//
-//     willRender() {
-//     }
-//
-//     render() {
-//     }
-//
-//     didRender() {
-//     }
-//
-//     disconnectedCallback() {
-//         render(() => null, this._root);
-//         this._unsubs.forEach(fn => fn && fn());
-//     }
-//
-//     _destroy = (dom) => {
-//         // // dom && removeHandlers(dom);
-//         // this._unsubs.forEach(fn => fn && fn());
-//         // this._destroyed = true;
-//         // render(() => null, this._root);
-//     };
+//     console.log('host node style obj', hostNodeStyleObj);
+//     console.log('selfStyleOjb', selfStyleObj)
+//     newValue = extend(hostNodeStyleObj, selfStyleObj);
+//     oldValue = hostNodeStyleObj;
+//     console.log('merged style', newValue)
 // }
-//
-// const element = (tag, component, propTypes) => {
-//         webComponentVisibility(tag);
-//         customElements.define(tag,
-//             component.prototype instanceof Xelement ? component :
-//                 class extends Xelement {
-//                     static propTypes = propTypes;
-//                     render = component;
-//                 }
-//         );
-//         return (props, children) => h(tag, props, children);
-//     },
-//
-//     x = (tag, component, propTypes) =>
-//         element('x-' + tag, component, propTypes);
-//
-// export {Xelement, x, element, context}
+// console.log('old value', oldValue);
+// console.log('new value', newValue)

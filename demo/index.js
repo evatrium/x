@@ -41,154 +41,44 @@ globalStyles(// language=CSS
         *::after {
             box-sizing: border-box;
         }
+
+        .red {
+            color: red
+        }
+
+        .yellow {
+            color: yellow
+        }
     `
 );
 
-
-const Test = x('test', class extends Xelement {
-
-    static propTypes = {name: String};
-
-    // constructor(){
-    //     super();
-    //     console.log('test constructed')
-    // }
-    //
-    // lifeCycle() {
-    //     // let interval = setInterval(() => {
-    //     //
-    //     // })
-    //     console.log('test mounted');
-    //     return () =>{
-    //         console.log('test unmounted')
-    //     }
-    // }
-
-    render({Host, name}) {
-        return (
-            <div>
-                <h1>name: {name}</h1>
-                <slot/>
-            </div>
-        )
-    }
-});
-
+let css = jcss`:host, *, *::before, *::after {box-sizing: border-box;} :host{display:block}`;
 
 const TestListItem = x('list-item', class extends Xelement {
-    static propTypes = {text: String};
 
-    render() {
-        return (
-            <div>
-                <b>{text}</b>
-                <slot/>
-            </div>
-        )
-    }
-})
+    state = {bool: true};
 
-const test = obi({
-    count: 0,
-});
-
-
-const counter = {
-    count: 0,
-    interval: null,
-    start() {
-        counter.stop();
-        counter.interval = setInterval(() => {
-            test.count = test.count + 1
-        }, 1000);
-    },
-    stop() {
-        clearInterval(counter.interval);
-    }
-};
-
-const $counter = obi(counter);
-
-const Counter = x('counter', class extends Xelement {
-    static propTypes = {color: String};
-
-    observe = test;
-
-    state = {mounted: false};
-    //
     lifeCycle() {
-        // let interval = setInterval(() => {
-        //
-        // })
-        // console.log('mounted');
-        this.setState({mounted: true});
-        return () =>{
-            // console.log('i unmounted', this.color)
-            this.setState({mounted: false})
+
+        return () => {
+
         }
     }
 
-
-    render({Host, color}, {mounted}) {
+    render({Host, host}, {bool}) {
         return (
-            <Host style={{border: '2px solid purple', width: '100%'}}>
-                <style>{`
-                     *, *::before,
-                        *::after {
-                            box-sizing: border-box;
-                        }
-                `}</style>
-                <span style={{color: 'blue', background: mounted ? 'white' : 'red'}}>{test.count}</span>
-                {/*<div style={{height: 20, width: 20, background: color || 'blue'}}>*/}
+            <Host style={{background: bool ? 'green' : 'red'}} className={bool ? 'yellow' : 'red'}>
 
-                {/*</div>*/}
+                <style>{css + ':host(.red){color:red} :host(.yellow){color:yellow}'}</style>
+                <button onClick={() => this.setState({bool: !bool})}>click me</button>
+                <span style={{fontWeight: 'bold', padding: 10}}>
+                    <slot/>
+                </span>
             </Host>
         )
     }
+
 });
-
-
-const Lister = x('lister', class extends Xelement {
-
-    constructor() {
-        super();
-        console.log('lister constructed')
-    }
-
-    observe = obi(todos);
-
-    lifeCycle() {
-        // let interval = setInterval(() => {
-        //
-        // })
-        console.log('lister mounted');
-        return () => {
-            console.log('lister unmounted')
-        }
-    }
-
-    /*
-        <TestListItem text={t.name} key={t.id}>
-                        <button onClick={() => todos.removeTodo(t)}>X</button>
-        </TestListItem>
-    */
-
-    render({Host}) {
-        return (
-            <ul>
-                {todos.displayList.map((t) => (
-                    <li key={t.id}>
-                        <b>{t.name}</b>
-                        <button onClick={() => todos.removeTodo(t)}>X</button>
-                        <Counter/>
-                    </li>
-                ))}
-
-            </ul>
-        )
-    }
-});
-
 
 const MoveElementTest = x('move', class extends Xelement {
 
@@ -196,132 +86,109 @@ const MoveElementTest = x('move', class extends Xelement {
     move = () => {
 
 
-        this.ul.insertBefore(this.redRef, this.blueRef);
+        this.derp.insertBefore(this.redRef, this.blueRef);
     };
 
     render({Host}) {
         return (
-            <Host style={{width: '100%', border: '2px solid purple', }}>
-                <style>{`
-                     *, *::before,
-                        *::after {
-                            box-sizing: border-box;
-                        }
-                `}</style>
+            <Host style={{width: '100%', border: '2px solid purple', '--bg': 'red'}}>
+
+                <style>{css}</style>
+
                 <button onClick={this.move}>toggle move</button>
 
-                <ul ref={r => this.ul = r} style={{width: '100%'}}>
+                <div ref={r => this.derp = r} style={{width: '100%'}}>
 
-                    <li ref={r => this.greenRef = r} style={{width: '100%'}}>
-                        <Counter color={'green'}/>
-                    </li>
+                    <TestListItem ref={r => this.greenRef = r}
+                                  style={{width: '100%', background: 'green', padding: 10, '--bg': 'red'}}>
+                        <h3>Im green!</h3>
+                    </TestListItem>
 
-                    <li ref={r => this.blueRef = r} style={{width: '100%'}}>
-                        <Counter color={'blue'}/>
-                    </li>
+                    <TestListItem ref={r => this.blueRef = r} style={{width: '100%', background: 'blue'}}>
+                        <h3>Im blue!</h3>
+                    </TestListItem>
 
-                    <li ref={r => this.redRef = r} style={{width: '100%'}}>
-                        <Counter color={'red'}/>
-                    </li>
-                </ul>
+                    <TestListItem ref={r => this.redRef = r} style={{width: '100%', background: 'red'}}>
+                        <h3>Im red!</h3>
+                    </TestListItem>
+                </div>
             </Host>
         )
     }
 });
 
 
+const Box = x('box', class extends Xelement {
+
+    render({Host, host}, {bool = true}) {
+        return (
+            <div style={{background: 'aliceblue'}}>
+                <button onClick={() => this.emit('hideClick', 'hello')}> hide me</button>
+                <span style={{fontSize: 30, fontWeight: 'bold'}}>hello</span>
+            </div>
+        )
+    }
+
+});
+
+
+// const TestListItem = x('list-item', ({host, Host}, {bool = true}) => {
+//     return (
+//         <Host style={{background: bool ? 'green' : 'red'}}>
+//                 <span style={{fontWeight: 'bold', padding: 10}}>
+//                 <button onClick={() => host.setState({bool: !bool})}>click me</button>
+//                     <slot/>
+//                 </span>
+//         </Host>
+//     )
+// });
+
+
 export const App = x('app', class extends Xelement {
 
-    static propTypes = {some: String, cool: Boolean, prop: Number, types: Object, yo: Array};
+    static propTypes = {some: String, cool: Boolean, prop: Number, types: Object, arrrrr: Array};
 
     state = {bool: true};
-    // obi(extend(todos, {bool: true}));
 
-    observe = obi(todos); // detects mutations on object values and triggers an update
+    observe = obi(todos); //global state reactivity ... more on this soon
 
 
-    render({Host, ...props}, state) {
-
-        const TextList = ({derp}) => (
-            <Fragment>
-
-                {todos.displayList.map(t => (<div onClick={derp} key={t.id}>{t.name}</div>))}
-
-            </Fragment>
-
-        );
-
+    render({Host, CSS, host, ...props}, {bool}, context) { //more on context soon
 
         return (
-            <Host style={{width: '100%'}}>
+            <Host style={{width: '100%'}}
+                // className={bool ? '' : 'derp'}
+            >
 
-                <style>
-                    {// language=CSS
-                            `
-                            :host, *, *::before,
-                            *::after {
-                                box-sizing: border-box;
-                            }
+                <CSS>{// language=CSS  //jcss is a babel plugin that will minify and auto prefix css
+                    jcss`:host, *, *::before, *::after {
+                        box-sizing: border-box;
+                    }
 
-                            .asdf {
-                                color: pink;
-                            }
-
-
-                            .derp {
-                                background: red;
-                            }
-                        `}
-                </style>
-
-
-                {/*
-
-                    ******************
-
-                    changing the class on subsequent render will indicate that the fragment hack is not working correctly.
-                    - if not working correctly it will change on the second re-render not the first re-render;
-                    - if working, will change first re-render
-
-                */}
-
-
-                <MoveElementTest/>
-
+                    :host {
+                        display: block
+                    }`
+                }</CSS>
 
                 <h1 className={todos.todoName === '' ? 'derp' : null}>
                     TODOS!!!!
                 </h1>
 
+                <button onClick={() => this.setState({bool: !bool})}> show me</button>
 
-                <h1 style={state.bool ? {color: todos.todoName === '' ? 'blue' : 'red'} : 'color:green'}
-                >
-                    style object!!!!</h1>
-
-
-                <h4> Num search results: {todos.displayList.length}</h4>
+                <div>
+                    {bool ? <Box onHideClick={() => this.setState({bool: !bool})}/> : <div/>}
+                </div>
 
 
-                {/*<Heyooo num={todos.displayList.length}/>*/}
-
-                {/*<input ref={this.input} placeholder="add todo" value={todos.todoName}*/}
-                {/*onInput={(e) => todos.todoName = e.target.value}/>*/}
-
-                {/*<button onClick={() => state.bool = !state.bool}> show hid derp</button>*/}
-                <button onClick={() => this.setState({bool: !state.bool})}> bool</button>
-
-                <button onClick={$counter.start}> start counter</button>
-                <button onClick={$counter.stop}> stop counter</button>
-
-
-                {state.bool && <Test name={todos.todoName} onClick={() => console.log('shit balls')}/>}
-
+                {/*<button onClick={bool ? null : ()=>console.log('click')} style={{color: bool ? 'red' : 'green'}}>*/}
+                {/*test click*/}
+                {/*</button>*/}
 
                 <button onClick={todos.makeABunch}>
                     make a bunch!!!
                 </button>
                 ... i dare you
-
 
                 <br/>
                 <br/>
@@ -340,17 +207,17 @@ export const App = x('app', class extends Xelement {
 
                 <div style="width:100%;display:flex">
 
-                    <div style="width:50%">
+                    <ul>
+                        {todos.displayList.map((t) => (
+                            <li key={t.id} style={{padding: 20}}>
+                                <button onClick={() => todos.removeTodo(t)}>X</button>
+                                <x-list-item className={bool ? 'red' : 'yellow'}
+                                             style={{background: bool ? 'purple' : 'blue'}}><b>{t.name}</b>
+                                </x-list-item>
+                            </li>
+                        ))}
 
-                        <x-lister></x-lister>
-
-                    </div>
-
-
-                    {/*<div style="width:50%">*/}
-                    {/*<TextList derp={() => console.log('derp')}/>*/}
-                    {/*</div>*/}
-
+                    </ul>
 
                 </div>
 

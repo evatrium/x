@@ -1,52 +1,21 @@
 const {DEFAULT_EXTENSIONS} = require('@babel/core');
-const {findSupportedBrowsers} = require('@open-wc/building-utils');
 const resolve = require('rollup-plugin-node-resolve');
 const {terser} = require('rollup-plugin-terser');
 const babel = require('rollup-plugin-babel');
 const sizes = require("@atomico/rollup-plugin-sizes");
-
 import pkg from './package.json';
 
-/*
-    options for excluding external dependencies
-    - don't use with umd
+const external = (id)=> !id.startsWith('.') && !id.startsWith('/');
 
-    function external(id) {
-        return !id.startsWith('.') && !id.startsWith('/');
-    }
-
-    //or
-
-    external: [
-        ...Object.keys(pkg.dependencies || {})
-    ],
-
-*/
-
-
-function external(id) {
-    return !id.startsWith('.') && !id.startsWith('/');
-}
-
-console.log('building for browsers: ', findSupportedBrowsers());
-
-function outputLib({file, format, min}) {
-    let oldSchoolShit = format !== 'esm',
-        ESM = format === 'esm',
-        UMD = format === 'umd',
-        CJS = format === 'cjs';
-
-    let umdName = format === 'umd' ? {name: 'iosiox'} : {};
-
+function outputLib() {
     return {
         input: "src/index.js",
         treeshake: true,
-        // external,
+        external, // comment this out to include external dependencies
         output: {
-            file,
-            format,
-            // dynamicImportFunction: !oldSchoolShit && 'importShim', //--- i think this is for bundling apps not so much for libs
-            ...umdName,
+            file: pkg.main,
+            format: 'esm',
+            sourcemap: true,
         },
         plugins: [
             resolve({
@@ -63,17 +32,14 @@ function outputLib({file, format, min}) {
                     [
                         '@babel/preset-env',
                         {
-                            targets: oldSchoolShit ? ['ie 11'] : (ESM ? ['chrome 75'] : findSupportedBrowsers()),
-                            // preset-env compiles template literals for safari 12 due to a small bug which
-                            // doesn't affect most use cases. for example lit-html handles it: (https://github.com/Polymer/lit-html/issues/575)
-                            exclude: oldSchoolShit ? undefined : ['@babel/plugin-transform-template-literals'],
+                            targets: ['chrome 77'],
                             useBuiltIns: false,
                             modules: false,
                         },
                     ],
                 ],
             }),
-          min && terser({
+            terser({
                 output: {comments: false},
                 mangle: {
                     properties: {
@@ -83,7 +49,7 @@ function outputLib({file, format, min}) {
                 compress: {
                     passes: 10,
                     drop_console: true,
-                    module: min
+                    module: true
                 }
             }),
             sizes()
@@ -91,11 +57,5 @@ function outputLib({file, format, min}) {
     };
 }
 
-export default [
-    outputLib({file: pkg.main, format: 'cjs'}),
-    outputLib({file: pkg.module, format: 'esm'}),
-    outputLib({file: pkg['module.min'], format: 'esm', min:true}),
-    outputLib({file: pkg.browser, format: 'umd', min: true}),
-    // outputLib({ file: 'lib/index.system.js', format: 'system'}), // --- i think this is for bundling apps not so much for libs
-];
+export default [outputLib()];
 
