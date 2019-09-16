@@ -17,31 +17,30 @@ use functional components
 import {h, x} from '@iosio/x';
 
 export const ColorComponent = x('color-component',
-    ({foo, host, Host}, {color = 'red'}) => {
+    // props, state, context
+    ({foo, host, Host}, {color = 'red'}) => (
+        <Host>
 
-        return (
-            <Host>
+            <h1 style={{color}}>hello i am {color}</h1>
 
-                <h1 style={{color}}>hello i am {color}</h1>
+            <button onClick={() => {
+                host.setState({color: color === 'red' ? 'blue' : 'red'})
+                host.emit('btnClicked');
+            }}>
+                hello - {foo}
+            </button>
 
-                <button onClick={()=>{
-                    host.setState({color:color === 'red' ? 'blue' : 'red'})
-                    host.emit('btnClicked');
-                }}>
-                    hello - {foo}
-                </button>
+            <slot/>
 
-                <slot/>
-
-            </Host>
-        )
-
-    }, {foo: Number}); // propTypes
+        </Host>
+    ), {foo: Number}); // propTypes
 ```
 
 or use class components
 
 ```js
+import {h, Xelement} from '@iosio/x';
+
 // x will auto prepend your tagname with x- ...but you can import element to use whatever
 export const App = x('app', class extends Xelement {
 
@@ -71,7 +70,8 @@ export const App = x('app', class extends Xelement {
             console.log('unmounted')
         }
     }
-
+    
+    // props, state, context
     render({Host, CSS, host, ...props}, {bool}, context) { //more on context soon
 
         return (
@@ -96,21 +96,18 @@ export const App = x('app', class extends Xelement {
                 </h1>
                
                
-               {/* 
-                    Use components just like you would with react
-               */} 
+               {/* Use components just like you would with react*/} 
                 <ColorComponent/>
                
-                 {/* 
-                     or use tyem by their tag name
-                 */}
-                 
-                 <x-color-component>
+                {/* or use them by their tag name*/}
+                <x-color-component>
                     heyooo
-                 </x-color-component>
+                </x-color-component>
 
 
                 <button onClick={() => this.setState({bool: !bool})}> show me</button>
+                
+                {bool && <h1>HELLOO</h1>}
 
                 <button onClick={todos.makeABunch}>
                     make a bunch!!! ... i dare you
