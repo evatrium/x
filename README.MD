@@ -54,12 +54,14 @@ export const App = x('app', class extends Xelement {
     observe = obi(todos); //global state reactivity ... more on this soon
     
     // component will update
+    // before render
     willRender(){
         // return false // return any falsy value other than undefined to prevent re-renderng 
-    } // befor render
+    } 
     
     // component did update
-    didRender(){} // after render
+    // after render
+    didRender(){} 
 
     // component did mount
     lifeCycle(){ 
