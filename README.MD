@@ -12,6 +12,7 @@ npm install @iosio/x --save
 ### Quick example for now
 
 use functional components
+
 ```js
 import {h, x} from '@iosio/x';
 
@@ -25,6 +26,7 @@ export const ColorComponent = x('color-component',
 
                 <button onClick={()=>{
                     host.setState({color:color === 'red' ? 'blue' : 'red'})
+                    host.emit('btnClicked');
                 }}>
                     hello - {foo}
                 </button>
@@ -34,19 +36,39 @@ export const ColorComponent = x('color-component',
             </Host>
         )
 
-    }, {foo: Number});
+    }, {foo: Number}); // propTypes
 ```
 
 or use class components
+
 ```js
+// x will auto prepend your tagname with x- ...but you can import element to use whatever
 export const App = x('app', class extends Xelement {
 
+    //set the propTypes for your observedAttributes
+    //will convert the attributes to the types you have defined here and then pass them to props
     static propTypes = {some: String, cool: Boolean, prop: Number, types: Object, arrrrr: Array};
 
     state = {bool: true};
 
     observe = obi(todos); //global state reactivity ... more on this soon
+    
+    // component will update
+    willRender(){
+        // return false // return any falsy value other than undefined to prevent re-renderng 
+    } // befor render
+    
+    // component did update
+    didRender(){} // after render
 
+    // component did mount
+    lifeCycle(){ 
+        console.log('component mounted')
+        return ()=>{ // component will unmount
+            // unsubcribe subscriptions here
+            console.log('unmounted')
+        }
+    }
 
     render({Host, CSS, host, ...props}, {bool}, context) { //more on context soon
 
@@ -81,7 +103,9 @@ export const App = x('app', class extends Xelement {
                      or use tyem by their tag name
                  */}
                  
-                 <x-color-component></x-color-component>
+                 <x-color-component>
+                    heyooo
+                 </x-color-component>
 
 
                 <button onClick={() => this.setState({bool: !bool})}> show me</button>
@@ -112,9 +136,7 @@ export const App = x('app', class extends Xelement {
                         {todos.displayList.map((t) => (
                             <li key={t.id} style={{padding: 20}}>
                                 <button onClick={() => todos.removeTodo(t)}>X</button>
-                                <x-list-item className={bool ? 'red' : 'yellow'}
-                                             style={{background: bool ? 'purple' : 'blue'}}><b>{t.name}</b>
-                                </x-list-item>
+                                <b>{t.name}</b>
                             </li>
                         ))}
 
