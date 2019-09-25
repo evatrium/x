@@ -1,6 +1,6 @@
 {
 	"name": "@iosio/x",
-	"version": "0.1.3",
+	"version": "0.1.4",
 	"description": "Build web components using vdom and jsx",
 	"main": "index.js",
 	"module": "index.js",
@@ -8,7 +8,13 @@
 		"access": "public"
 	},
 	"license": "MIT",
-	"files": ["src", "index.js", "routing.js", "utils.js", "obi.js"],
+	"files": [
+		"src",
+		"index.js",
+		"routing.js",
+		"utils.js",
+		"obi.js"
+	],
 	"keywords": [
 		"web-components",
 		"web",
