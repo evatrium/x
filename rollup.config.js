@@ -3,49 +3,33 @@ import resolve from 'rollup-plugin-node-resolve';
 import {terser} from 'rollup-plugin-terser';
 import babel from 'rollup-plugin-babel';
 import sizes from "@atomico/rollup-plugin-sizes";
-import multiInput from 'rollup-plugin-multi-input';
+// import multiInput from 'rollup-plugin-multi-input';
 const {createBabelConfig} = require('./createBabelConfig');
 
 
 const external = (id)=> !id.startsWith('.') && !id.startsWith('/');
 
-function outputLib(options) {
+function outputLib({input, output}) {
     return {
         input:
+        // input,
+            // 'src/index.js',
         // "x/*.js",
-            ["./src/index.js", './src/utils.js', './src/routing.js', './src/obi.js'],
+            ["src/index.js", 'src/utils.js', 'src/routing.js', 'src/obi.js'],
         treeshake: true,
         external, // comment this out to include external dependencies
         output: {
-            // file: pkg.main,
-            dir: 'lib',// path.join('lib', ''),
-            format: 'esm',
+            // file: output,
+            dir: './',
+            format: 'es',
+            chunkFileNames: "core.js",
             sourcemap: true,
         },
         plugins: [
-            // multiEntry(),
-            multiInput({ relative: 'src/' }),
+            // multiInput({ relative: 'src/' }),
             resolve({
                 extensions: DEFAULT_EXTENSIONS,
             }),
-            // babel({
-            //     extensions: DEFAULT_EXTENSIONS,
-            //     plugins: [
-            //         '@babel/plugin-syntax-dynamic-import',
-            //         '@babel/plugin-syntax-import-meta',
-            //         ['bundled-import-meta', {importStyle: 'baseURI'}],
-            //     ].filter(_ => !!_),
-            //     presets: [
-            //         [
-            //             '@babel/preset-env',
-            //             {
-            //                 targets: ['chrome 77'],
-            //                 useBuiltIns: false,
-            //                 modules: false,
-            //             },
-            //         ],
-            //     ],
-            // }),
             babel({
                     babelrc: false,
                     configFile: false,
@@ -70,5 +54,10 @@ function outputLib(options) {
     };
 }
 
-export default outputLib();
+export default [
+    outputLib({}),
+    // outputLib({input:'src/index.js', output: 'lib/index.js'}),
+    // outputLib({input:'src/routing.js', output: 'routing/index.js'}),
+    // outputLib({input:'src/obi.js', output: 'obi/index.js'}),
+];
 
