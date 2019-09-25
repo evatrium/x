@@ -16,9 +16,8 @@ use functional components
 ```js
 import {h, x} from '@iosio/x';
 
-export const ColorComponent = x('color-component',
-    // props, state, context
-    ({ Host, CSS, host foo}, {color = 'red'}) => (
+export const ColorComponent = x('x-color',
+ ({ Host, CSS, host, foo}, {color = 'red'}) => (
         <Host>
             <CSS>
             
@@ -35,7 +34,12 @@ export const ColorComponent = x('color-component',
             <slot/>
 
         </Host>
-    ), {propTypes:{foo: Number}, shadow:true});
+    ), 
+    {
+        propTypes: {foo: Number},
+        shadow:true
+     }
+ );
 ```
 
 or use class components
@@ -50,9 +54,10 @@ import {todos as t} from './todosStateAndActions';
 const todos = obi(t);
 
 export const App = x('x-app', class extends Component {
-
+    static shadow = true; 
     //set the propTypes for your observedAttributes
-    //the incoming attributes will be converted to the types you have defined here and then passed to props
+    //the incoming attributes will be converted to the 
+    //types you have defined here and then passed to props
     static propTypes = {
         reflectMeAsAnAttributeWithADefaultValue: {
           type: String,
@@ -86,14 +91,18 @@ export const App = x('x-app', class extends Component {
         return (
             <Host style={{width: '100%'}}>
                 {/* 
-                    CSS component will check for the existence of constructable style sheets
-                    and adopt the css sheet to this class (once) and all instances will share the same sheet.
-                    Otherwise, if the browser does not support it, it will default to a style tag
+                    CSS component will check for the existence of 
+                    constructable style sheets
+                    and adopt the css sheet to this class (once)
+                    and all instances will share the same sheet.
+                    Otherwise, if the browser does not support it, 
+                    it will default to a style tag
                 */}
                 <CSS>{ // jcss is a babel plugin that will minify and auto prefix css
                     jcss`
                     :host {
-                        display: block
+                        display: block;
+                        color: var(--myThemeColor);
                     }`
                 }</CSS>
 
@@ -106,9 +115,9 @@ export const App = x('x-app', class extends Component {
                 <ColorComponent/>
                
                 {/* or use them by their tag name*/}
-                <x-color-component>
+                <x-color onBtnClick={()=>console.log('the inside button was clicked')}>
                     heyooo
-                </x-color-component>
+                </x-color>
 
 
                 <button onClick={() => this.setState({bool: !bool})}> show me</button>
