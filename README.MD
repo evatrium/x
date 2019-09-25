@@ -19,9 +19,7 @@ import {h, x} from '@iosio/x';
 export const ColorComponent = x('x-color',
  ({ Host, CSS, host, foo}, {color = 'red'}) => (
         <Host>
-            <CSS>
-            
-            </CSS>
+            <CSS/>
             <h1 style={{color}}>hello i am {color}</h1>
 
             <button onClick={() => {
@@ -83,6 +81,11 @@ export const App = x('x-app', class extends Component {
             // unsubcribe subscriptions here
             console.log('unmounted')
         }
+    }
+    
+    willRender() { 
+        // will still render one time -initially
+        return false; // but no more rendering!
     }
     
     // props, state, context
@@ -167,6 +170,37 @@ export const App = x('x-app', class extends Component {
 
 
 ```
+
+## LifeCycle Methods
+
+#### willMount
+Called once before render.
+
+#### shouldUpdate
+Called before every render. Return a falsy value (other than undefined) from this method to prevent any subsequent rendering
+
+#### willRender
+Called before every render. Optionally return a falsy value (other than undefined) from this method to prevent any subsequent rendering.
+
+#### didRender
+Called after every render.
+
+#### willUpdate
+Called before every render besides the first.
+
+#### didUpdate
+Called after every render besides the first.
+
+#### didMount
+Called once after the first render.
+
+#### lifeCycle
+Same as didMount but optionally return a callback from this method that should be invoked during willUnmount
+
+#### willUnmount
+Called before the component is removed from the dom
+
+
 
 
 ### License
