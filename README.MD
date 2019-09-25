@@ -174,13 +174,13 @@ export const App = x('x-app', class extends Component {
 ## LifeCycle Methods
 
 #### willMount
-Called once before render.
+Called once before first render.
 
 #### shouldUpdate
-Called before every render. Return a falsy value (other than undefined) from this method to prevent any subsequent rendering
+Called before every render besides the first. Return a falsy value (other than undefined) from this method if the component should not update.
 
 #### willRender
-Called before every render. Optionally return a falsy value (other than undefined) from this method to prevent any subsequent rendering.
+Called before every render. Optionally return a falsy value (other than undefined) from this method if the component should not update.
 
 #### didRender
 Called after every render.
@@ -195,10 +195,10 @@ Called after every render besides the first.
 Called once after the first render.
 
 #### lifeCycle
-Same as didMount but optionally return a callback from this method that should be invoked during willUnmount
+Same as didMount but optionally return a callback from this method that should be invoked during willUnmount, to unsubscribe any subscribers
 
 #### willUnmount
-Called before the component is removed from the dom
+Called before the component is removed from the dom. unsubscribe any subscribers
 
 
 
