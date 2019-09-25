@@ -1,6 +1,6 @@
 {
 	"name": "@iosio/x",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "Build web components using vdom and jsx",
 	"main": "lib/index.js",
 	"module": "lib/index.esm.js",
