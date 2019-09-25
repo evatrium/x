@@ -31,8 +31,9 @@ yarn-error.log*
 # testing
 /coverage
 
-/core.*
+
 /index.*
-/lazy.*
-/router.*
-scrap.txt
+/routing.*
+/obi.*
+/utils.*
+/scrap.txt

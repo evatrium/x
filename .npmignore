@@ -32,5 +32,4 @@ yarn-error.log*
 /coverage
 
 node_modules
-/index.html
-scrap.txt
+/scrap.txt
