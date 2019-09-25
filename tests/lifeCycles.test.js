@@ -1,18 +1,20 @@
-import {Xelement, element, x, h, Fragment, Host} from "../src";
+import {Component, x, h, Fragment} from "../src";
+// import {Component, x, h, Fragment} from "../lib";
 import {randomName, mount, till} from "./_testUtils";
 
-import {obi} from "@iosio/obi";
+// import {obi} from "../lib/obi";
+import {obi} from "../src/obi";
 
 
 var lifeCycles, tests, shouldReRender, tag, node, observable;
 
-const createXelement = () => {
+const createComponent = () => {
 
     let tag = randomName();
 
     observable = obi({observableValue: 'hello'});
 
-    element(tag, class extends Xelement {
+    x(tag, class extends Component {
 
         static propTypes = {
             testText: {type: String, reflect: true, value: ''}
@@ -22,26 +24,16 @@ const createXelement = () => {
 
         state = {test: 'abc'};
 
+        willMount() {
+            lifeCycles.willMount();
+        }
+
+
         willRender() {
             // console.log('************ will render');
             lifeCycles.willRender();
             // return 'some truthy value to indicate that a re-render should NOT take place'
             return shouldReRender;
-        }
-
-        didRender() {
-            // console.log('************ did render');
-            lifeCycles.didRender();
-        }
-
-        lifeCycle() {
-
-            lifeCycles.lifeCycle();
-            this._unsubs.push(lifeCycles.unsubscribe) // adds 1 call to lifeCycle.unsubscribe
-            return () => { // adds 1 call to lifeCycle.unsubscribe
-                // console.log('******** will unmount');
-                lifeCycles.willUnmount();
-            }
         }
 
         render({testText}) {
@@ -50,30 +42,73 @@ const createXelement = () => {
 
             return (<h1>{testText}</h1>)
         }
+
+        // shouldUpdate(){
+        //     return shouldReRender
+        // }
+
+        didRender() {
+            // console.log('************ did render');
+            lifeCycles.didRender();
+        }
+
+        willUpdate() {
+            lifeCycles.willUpdate();
+        }
+
+        didUpdate() {
+            lifeCycles.didUpdate();
+        }
+
+        didMount() {
+            lifeCycles.didMount();
+        }
+
+        lifeCycle() {
+
+            lifeCycles.lifeCycle();
+            // adds 1 call to lifeCycle.unsubscribe
+            return () => {
+                return lifeCycles.unsubscribe()
+                // adds 1 call to lifeCycle.unsubscribe
+                // console.log('******** will unmount');
+
+            }
+        }
+
+        willUnmount() {
+            lifeCycles.willUnmount();
+        }
+
+
     });
 
     return tag;
 };
 
 
-describe('Xelement lifeCycles', () => {
+describe('Component lifeCycles', () => {
 
 
     beforeEach(function () {
 
         shouldReRender = undefined;
 
-        tag = createXelement();
+        tag = createComponent();
 
         lifeCycles = jasmine.createSpyObj('lifeCycles',
-            ['willRender', 'render', 'didRender', 'lifeCycle', 'willUnmount', 'unsubscribe']
+            ['willMount', 'willRender', 'render', 'didRender', 'willUpdate', 'didUpdate', 'didMount', 'lifeCycle', 'willUnmount', 'unsubscribe']
         );
 
 
-        tests = ({willRender, render, didRender, lifeCycle, willUnmount, unsubscribe}) => {
+        tests = ({willMount, willRender, render, didRender, willUpdate, didUpdate, didMount, lifeCycle, willUnmount, unsubscribe}) => {
+            (willMount || willMount === 0) && expect(lifeCycles.willMount.calls.count()).toEqual(willMount);
             (willRender || willRender === 0) && expect(lifeCycles.willRender.calls.count()).toEqual(willRender);
             (render || render === 0) && expect(lifeCycles.render.calls.count()).toEqual(render);
             (didRender || didRender === 0) && expect(lifeCycles.didRender.calls.count()).toEqual(didRender);
+            (willUpdate || willUpdate === 0) && expect(lifeCycles.willUpdate.calls.count()).toEqual(willUpdate);
+            (didUpdate || didUpdate === 0) && expect(lifeCycles.didUpdate.calls.count()).toEqual(didUpdate);
+            (didMount || didMount === 0) && expect(lifeCycles.didMount.calls.count()).toEqual(didMount);
             (lifeCycle || lifeCycle === 0) && expect(lifeCycles.lifeCycle.calls.count()).toEqual(lifeCycle);
             (willUnmount || willUnmount === 0) && expect(lifeCycles.willUnmount.calls.count()).toEqual(willUnmount);
             (unsubscribe || unsubscribe === 0) && expect(lifeCycles.unsubscribe.calls.count()).toEqual(unsubscribe);
@@ -88,9 +123,13 @@ describe('Xelement lifeCycles', () => {
         let {node} = await mount({tag});
 
         tests({
+            willMount: 1,
             willRender: 1,
             render: 1,
             didRender: 1,
+            willUpdate: 0,
+            didUpdate: 0,
+            didMount: 1,
             lifeCycle: 1,
             willUnmount: 0,
             unsubscribe: 0
@@ -115,9 +154,13 @@ describe('Xelement lifeCycles', () => {
 
 
         tests({
+            willMount: 1,
             willRender: 2,
             render: 2,
             didRender: 2,
+            willUpdate: 1,
+            didUpdate: 1,
+            didMount: 1,
             lifeCycle: 1,
             willUnmount: 0,
             unsubscribe: 0
@@ -129,8 +172,7 @@ describe('Xelement lifeCycles', () => {
 
     });
 
-
-    it('setting an attribute again with the same value should only trigger the willRender method ', async (done) => {
+    it('setting an attribute again with the same value should do nothing', async (done) => {
 
         let {node} = await mount({tag}); //1
 
@@ -143,9 +185,13 @@ describe('Xelement lifeCycles', () => {
         await node._process;
 
         tests({
+            willMount: 1,
             willRender: 2,
             render: 2,
             didRender: 2,
+            willUpdate: 1,
+            didUpdate: 1,
+            didMount: 1,
             lifeCycle: 1,
             willUnmount: 0,
             unsubscribe: 0
@@ -157,21 +203,24 @@ describe('Xelement lifeCycles', () => {
 
     });
 
-    it('setting an attribute (one which is observed) again with a new value should trigger the correct lifecycle methods ', async (done) => {
+
+    it('setting an attribute (one which is observed) again with a new value should trigger the correct lifecycle methods', async (done) => {
 
 
         let {node} = await mount({tag});
 
-        /*
-           setting an attribute with the same value should NOT trigger a rerender
-        */
+
         node.setAttribute('test-text', 'test1');
         await node._process;
 
         tests({
+            willMount: 1,
             willRender: 2,
             render: 2,
             didRender: 2,
+            willUpdate: 1,
+            didUpdate: 1,
+            didMount: 1,
             lifeCycle: 1,
             willUnmount: 0,
             unsubscribe: 0
@@ -186,14 +235,17 @@ describe('Xelement lifeCycles', () => {
         await node._process;
 
         tests({
+            willMount: 1,
             willRender: 3,
             render: 3,
             didRender: 3,
+            willUpdate: 2,
+            didUpdate: 2,
+            didMount: 1,
             lifeCycle: 1,
             willUnmount: 0,
             unsubscribe: 0
         });
-
 
         node.remove();
 
@@ -208,8 +260,8 @@ describe('Xelement lifeCycles', () => {
         let {node} = await mount({tag});
 
         /*
-             returning true from willRender should prevent re-rendering
-             (hence - willRender will be called in order to return the value)
+             returning false from willRender should prevent re-rendering
+             ( willRender will be called in order to return the value)
         */
 
         shouldReRender = false;
@@ -219,16 +271,19 @@ describe('Xelement lifeCycles', () => {
         await node._process;
 
         tests({
+            willMount: 1,
             willRender: 2,
             render: 1,
             didRender: 1,
+            willUpdate: 0,
+            didUpdate: 0,
+            didMount: 1,
             lifeCycle: 1,
             willUnmount: 0,
             unsubscribe: 0
         });
 
-
-        node.remove();
+        // node.remove();
 
 
         done();
@@ -240,16 +295,18 @@ describe('Xelement lifeCycles', () => {
 
         let {node} = await mount({tag});
 
-
         node.setState({test: 123});
-
 
         await node._process;
 
         tests({
+            willMount: 1,
             willRender: 2,
             render: 2,
             didRender: 2,
+            willUpdate: 1,
+            didUpdate: 1,
+            didMount: 1,
             lifeCycle: 1,
             willUnmount: 0,
             unsubscribe: 0
@@ -276,10 +333,15 @@ describe('Xelement lifeCycles', () => {
 
         await node._process;
 
+
         tests({
+            willMount: 1,
             willRender: 2,
             render: 2,
             didRender: 2,
+            willUpdate: 1,
+            didUpdate: 1,
+            didMount: 1,
             lifeCycle: 1,
             willUnmount: 0,
             unsubscribe: 0
@@ -296,35 +358,38 @@ describe('Xelement lifeCycles', () => {
 
 
 
-
-
-
-
     it('removing the element should call willUnmount and unsubscribe the subscriptions ', async (done) => {
 
         let {node} = await mount({tag});
 
         tests({
+            willMount: 1,
             willRender: 1,
             render: 1,
             didRender: 1,
+            willUpdate: 0,
+            didUpdate: 0,
+            didMount: 1,
             lifeCycle: 1,
             willUnmount: 0,
             unsubscribe: 0
         });
 
-
         node.remove();
 
-
         tests({
+            willMount: 1,
             willRender: 1,
             render: 1,
             didRender: 1,
+            willUpdate: 0,
+            didUpdate: 0,
+            didMount: 1,
             lifeCycle: 1,
             willUnmount: 1,
             unsubscribe: 1
         });
+
 
         done();
 

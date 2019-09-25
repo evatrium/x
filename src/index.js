@@ -1,5 +1,3 @@
-export {h, Fragment} from './vdom'
-// export {h} from 'preact';
+export {h, Fragment, patch} from './vdom'
 export {globalStyles} from './utils'
-export {x, Xelement, element, context} from './xelement'
-// export {provide} from './provide'
+export {x, Component, provide} from './Component'

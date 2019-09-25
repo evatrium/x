@@ -31,10 +31,11 @@ export const todos = {
     },
     setSearchValue(value) {
         todos.searchValue = value;
+        value = value.toLowerCase();
         // todos.displayList = [...todos.list.filter(t => t.name.search(value) !== -1)];
         todos.displayList = value.length === 0
             ? [...todos.list]
-            : [...todos.list.filter(t => t.name.search(value) !== -1)];
+            : [...todos.list.filter(t => t.name.toLowerCase().search(value) !== -1)];
     },
     addTodo(e) {
         e && e.preventDefault();

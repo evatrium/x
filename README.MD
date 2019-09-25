@@ -1,6 +1,6 @@
 # @iosio/x
 <img src="https://img.shields.io/circleci/project/github/iosio/x.svg?style=flat-square" /><img src="https://img.shields.io/npm/v/@iosio/x.svg?style=flat-square" /><img src="https://img.shields.io/bundlephobia/minzip/@iosio/x.svg?style=flat-square" />
-> create web components using vdom
+> create web components using vdom and jsx
 
 Inspiration: stencil, superfine, atomico, preact and open-wc
 
@@ -18,9 +18,11 @@ import {h, x} from '@iosio/x';
 
 export const ColorComponent = x('color-component',
     // props, state, context
-    ({foo, host, Host}, {color = 'red'}) => (
+    ({ Host, CSS, host foo}, {color = 'red'}) => (
         <Host>
-
+            <CSS>
+            
+            </CSS>
             <h1 style={{color}}>hello i am {color}</h1>
 
             <button onClick={() => {
@@ -33,37 +35,40 @@ export const ColorComponent = x('color-component',
             <slot/>
 
         </Host>
-    ), {foo: Number}); // propTypes
+    ), {propTypes:{foo: Number}, shadow:true});
 ```
 
 or use class components
 
 ```js
-import {
-    h, 
-    Xelement,
-    x, 
-    // element
-} from '@iosio/x';
+import { Component, h, x } from '@iosio/x';
 
-// x will auto prepend your tagname with x- ...but you can import element to use whatever
-export const App = x('app', class extends Xelement {
+import {obi} from '@iosio/x/lib/obi'
+
+import {todos as t} from './todosStateAndActions';
+
+const todos = obi(t);
+
+export const App = x('x-app', class extends Component {
 
     //set the propTypes for your observedAttributes
     //the incoming attributes will be converted to the types you have defined here and then passed to props
-    static propTypes = {some: String, cool: Boolean, prop: Number, types: Object, arrrrr: Array};
+    static propTypes = {
+        reflectMeAsAnAttributeWithADefaultValue: {
+          type: String,
+          reflect: true,
+          value: 'my initial value as an attribute'  
+        },
+        some: String, 
+        cool: Boolean,
+        prop: Number,
+        types: Object, 
+        arrrrr: Array,
+    };
 
     state = {bool: true};
 
-    observe = obi(todos); //global state reactivity ... more on this soon
-    
-    // before render (componentWillUpdate)
-    willRender(){
-        // return false // return any falsy value other than undefined to prevent re-renderng 
-    } 
-    
-    // after render (componentDidUpdate)
-    didRender(){} 
+    observe = todos; //global state reactivity ... more on this soon
 
     // (componentDidMount => componentWillUnmount)
     lifeCycle(){ 
@@ -76,7 +81,7 @@ export const App = x('app', class extends Xelement {
     }
     
     // props, state, context
-    render({Host, CSS, host, ...props}, {bool}, context) { //more on context soon
+    render({Host, CSS, host, ...props}, {bool}) { //more on context soon
 
         return (
             <Host style={{width: '100%'}}>
@@ -86,10 +91,7 @@ export const App = x('app', class extends Xelement {
                     Otherwise, if the browser does not support it, it will default to a style tag
                 */}
                 <CSS>{ // jcss is a babel plugin that will minify and auto prefix css
-                    jcss`:host, *, *::before, *::after {
-                        box-sizing: border-box;
-                    }
-
+                    jcss`
                     :host {
                         display: block
                     }`
@@ -132,7 +134,7 @@ export const App = x('app', class extends Xelement {
 
                 <input placeholder="search" value={todos.searchValue}
                        onInput={(e) => todos.setSearchValue(e.target.value)}/>
-
+                       
                 <div>
                 
                     <ul>
@@ -156,13 +158,6 @@ export const App = x('app', class extends Xelement {
 
 
 ```
-
-### Coming soon*
-**@iosio/x-boilerplate** - starter that will include modern build tools and dependencies for creating apps and libs with x
-
-then eventually
-
-**@iosio/create-x** - a CLI to scaffold UI libraries and apps
 
 
 ### License

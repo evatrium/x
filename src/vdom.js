@@ -12,7 +12,8 @@ import {
     addListener,
     objectIsEmpty,
     toLowerCase,
-    COMPONENT_VISIBLE_CLASSNAME
+    COMPONENT_MOUNTED_ATTRIBUTE,
+    IS_NON_DIMENSIONAL
 } from "./utils";
 
 // modified version of https://github.com/jorgebucaran/superfine
@@ -61,18 +62,18 @@ var removeChild = (parent, child) => parent.removeChild(child),
 
     /* ------------ preact's style property */
 
-    IS_NON_DIMENSIONAL = /acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|zoo|^ord|^--/i,
 
-    setStyle = (style, key, value) => {
+    checkForPx = (key, value) => typeof value === 'number' && IS_NON_DIMENSIONAL.test(key) === false ? value + 'px' : value,
+    setStyle = (style, key, value, noCheckNeeded) => {
         key[0] === '-' ? style.setProperty(key, value) :
-            style[key] = typeof value === 'number' && IS_NON_DIMENSIONAL.test(key) === false ? value + 'px' : value;
+            style[key] = !noCheckNeeded ? checkForPx(key, value) : value;
     },
-    styleNode = (dom, value, oldValue, _s) => {
-        _s = dom.style;
-        if (isString(value)) return _s.cssText = value;
+    styleNode = (dom, newValue, oldValue) => {
+        let _s = dom.style;
+        if (isString(newValue)) return _s.cssText = newValue;
         if (isString(oldValue)) (_s.cssText = '', oldValue = NULL);
-        if (oldValue) for (let i in oldValue) if (!(value && i in value)) setStyle(_s, i, '');
-        if (value) for (let i in value) if (!oldValue || value[i] !== oldValue[i]) setStyle(_s, i, value[i]);
+        if (oldValue) for (let i in oldValue) if (!(newValue && i in newValue)) setStyle(_s, i, '');
+        if (newValue) for (let i in newValue) if (!oldValue || newValue[i] !== oldValue[i]) setStyle(_s, i, newValue[i]);
     },
 
     /* ------------ */
@@ -86,12 +87,10 @@ var removeChild = (parent, child) => parent.removeChild(child),
     },
 
     // split the classNames up into an array and filter them
-    parseClassList = (value) => (!value) ? [] : value.split(/\s+/).filter(c => c),
-
+    parseClassList = value => (!value) ? [] : value.split(/\s+/).filter(c => c),
+    getClassList = value => parseClassList(isObj(value) ? cnObj(value) : value),
     updateClassList = (node, value, action) =>
-        parseClassList(isObj(value) ? cnObj(value) : value).forEach(cls => {
-            COMPONENT_VISIBLE_CLASSNAME !== cls && node.classList[action](cls)
-        }),
+        getClassList(value).forEach(cls => node.classList[action](cls)),
 
 
     patchProperty = (node, key, oldValue, newValue, isSvg) => {
@@ -105,26 +104,26 @@ var removeChild = (parent, child) => parent.removeChild(child),
             let eventType = (toLowerCase(key) in node)
                 ? toLowerCase(key.slice(2))
                 : toLowerCase(key[2]) + key.substring(3);
+            // console.log(key, eventType)
             if (newValue) {
                 if (!oldValue) addListener(node, eventType, listener);
                 (node.handlers || (node.handlers = {}))[eventType] = newValue
             } else removeListener(node, eventType, listener)
 
-        } else if (key === 'ref') isFunc(newValue) ? newValue(node) : newValue = node;
+        } else if (key === 'ref' && isFunc(newValue)) newValue(node);
+
         else if (key === 'style') styleNode(node, newValue, oldValue);
+
         else if (key === 'className' || key === 'class') {
+
             updateClassList(node, oldValue, 'remove');
             updateClassList(node, newValue, 'add');
-            /*
-               In order to prevent initial style flashing/reflow of undefined web components
-               a style tag that is embedded in the html contains a class for all the custom element tags
-               which sets them to visibility hidden initially. Once the web component has rendered
-               it adds a class to its own classList to make it visibility inherit.
-               The following actually works great for avoiding the already defined class names that exist
-               on the component or defined by other means / internally or by some other component.
-            */
+
         } else if (!isSvg && key !== "list" && (key in node)) node[key] = newValue == NULL ? "" : newValue;
-        else updateAttribute(node, key, newValue)
+        else {
+
+            updateAttribute(node, key, newValue)
+        }
     },
 
     createNode = (vnode, isSvg) => {
@@ -149,7 +148,7 @@ var removeChild = (parent, child) => parent.removeChild(child),
 
             props = vnode.props;
 
-        for (var k in props) patchProperty(node, k, NULL, props[k], isSvg);
+        for (var k in props) node.nodeName !== HOST_TYPE && patchProperty(node, k, NULL, props[k], isSvg);
         for (var i = 0, len = vnode.children.length; i < len; i++) appendChild(node, createNode(vnode.children[i], isSvg));
         return (vnode.node = node)
     },
@@ -199,7 +198,8 @@ var removeChild = (parent, child) => parent.removeChild(child),
                 var _old = oldVProps[key], _new = newVProps[key];
 
                 if ((['value', 'selected', 'checked'].includes(key) ? node[key] : _old) !== _new) {
-                    patchProperty(node, key, _old, _new, isSvg)
+
+                    newVNode.name !== HOST_TYPE && patchProperty(node, key, _old, _new, isSvg)
                 }
             }
 
@@ -354,5 +354,5 @@ var removeChild = (parent, child) => parent.removeChild(child),
             : createVNode(name, props, children, NULL, props.key)
     };
 
-export {patch, h, Fragment, removeHandlers, HOST_TYPE, patchProperty, merge}
+export {patch, h, Fragment, removeHandlers, HOST_TYPE, patchProperty, merge, parseClassList, cnObj, styleNode, setStyle}
 

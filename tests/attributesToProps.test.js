@@ -1,17 +1,16 @@
-import {Xelement, element, x, h, Fragment} from "../src";
+import {Component, x, h, Fragment} from "../src";
+// import {Component, x, h, Fragment} from "../lib";
 import {randomName, mount, till} from "./_testUtils";
-
-import {obi} from "@iosio/obi";
-
 
 var expectedCalls, tests, shouldReRender, tag, node, observable;
 
-const createXelement = ({propTypes = {}, renderFunc}) => {
+const createComponent = ({propTypes = {}, renderFunc}) => {
 
     let tag = randomName();
 
-    element(tag, class extends Xelement {
+    x(tag, class extends Component {
 
+        static shadow = true;
         static propTypes = propTypes;
 
         willRender() {
@@ -43,7 +42,7 @@ const createXelement = ({propTypes = {}, renderFunc}) => {
 
 
 
-describe('Xelement props', () => {
+describe('Component props', () => {
 
 
     beforeEach(function () {
@@ -97,7 +96,7 @@ describe('Xelement props', () => {
 
             attributes,
 
-            tag: createXelement({
+            tag: createComponent({
                 propTypes,
                 renderFunc:({Host, CSS, host, ...props})=>{
                     expectedCalls.renderedAttributesToProps(props);
@@ -154,7 +153,7 @@ describe('Xelement props', () => {
 
             attributes,
 
-            tag: createXelement({
+            tag: createComponent({
                 propTypes,
                 renderFunc:({Host, CSS, host, ...props})=>{
                     expectedCalls.renderedAttributesToProps(props);
@@ -185,7 +184,7 @@ describe('Xelement props', () => {
 
         node.string = 'hello';
 
-        await node._process;
+        await node.processing;
 
 
         tests({
@@ -224,7 +223,7 @@ describe('Xelement props', () => {
 
             attributes,
 
-            tag: createXelement({
+            tag: createComponent({
                 propTypes,
                 renderFunc:({Host, CSS, host, ...props})=>{
                     expectedCalls.renderedAttributesToProps(props);
@@ -258,7 +257,7 @@ describe('Xelement props', () => {
 
         node.setAttribute('string', 'hello again');
 
-        await node._process;
+        await node.processing;
 
         tests({
             willRender: 2,

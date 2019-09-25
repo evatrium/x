@@ -1,14 +1,6 @@
-import {x, Xelement, globalStyles} from "../src";
-import {h, Fragment} from "../src";
-
-// import {h, render, Fragment, Component} from "preact";
-
-
+import {x, Component, globalStyles, h, Fragment} from "../lib";
 import {todos} from "../demo/todos";
-import {extend} from "@iosio/util";
-
-import {obi} from "@iosio/obi";
-
+import {obi} from "../src/obi";
 
 globalStyles(// language=CSS
         `    html {
@@ -54,7 +46,7 @@ globalStyles(// language=CSS
 
 let css = jcss`:host, *, *::before, *::after {box-sizing: border-box;} :host{display:block}`;
 
-const TestListItem = x('list-item', class extends Xelement {
+const TestListItem = x('list-item', class extends Component {
 
     state = {bool: true};
 
@@ -80,7 +72,7 @@ const TestListItem = x('list-item', class extends Xelement {
 
 });
 
-const MoveElementTest = x('move', class extends Xelement {
+const MoveElementTest = x('x-move', class extends Component {
 
 
     move = () => {
@@ -118,7 +110,7 @@ const MoveElementTest = x('move', class extends Xelement {
 });
 
 
-const Box = x('box', class extends Xelement {
+const Box = x('x-box', class extends Component {
 
     render({Host, host}, {bool = true}) {
         return (
@@ -144,7 +136,7 @@ const Box = x('box', class extends Xelement {
 // });
 
 
-export const App = x('app', class extends Xelement {
+export const App = x('x-app', class extends Component {
 
     static propTypes = {some: String, cool: Boolean, prop: Number, types: Object, arrrrr: Array};
 
@@ -161,24 +153,22 @@ export const App = x('app', class extends Xelement {
             >
 
                 <CSS>{// language=CSS  //jcss is a babel plugin that will minify and auto prefix css
-                    jcss`:host, *, *::before, *::after {
-                        box-sizing: border-box;
-                    }
-
-                    :host {
-                        display: block
-                    }`
+                    jcss`
+                        :host {
+                            display: block
+                        }`
                 }</CSS>
 
-                <h1 className={todos.todoName === '' ? 'derp' : null}>
-                    TODOS!!!!
-                </h1>
 
-                <button onClick={() => this.setState({bool: !bool})}> show me</button>
+                    <h1 className={todos.todoName === '' ? 'derp' : null}>
+                        TODOS!!!!
+                    </h1>
 
-                <div>
-                    {bool ? <Box onHideClick={() => this.setState({bool: !bool})}/> : <div/>}
-                </div>
+                    <button onClick={() => this.setState({bool: !bool})}> show me</button>
+
+                    <div>
+                        {bool ? <Box onHideClick={() => this.setState({bool: !bool})}/> : <div/>}
+                    </div>
 
 
                 {/*<button onClick={bool ? null : ()=>console.log('click')} style={{color: bool ? 'red' : 'green'}}>*/}
@@ -193,7 +183,7 @@ export const App = x('app', class extends Xelement {
                 <br/>
                 <br/>
 
-                <input ref={this.input} placeholder="add todo" value={todos.todoName}
+                <input placeholder="add todo" value={todos.todoName}
                        onInput={(e) => todos.todoName = e.target.value}/>
 
                 <button onClick={todos.addTodo} style="color:blue">

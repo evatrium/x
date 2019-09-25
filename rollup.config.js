@@ -1,44 +1,57 @@
-const {DEFAULT_EXTENSIONS} = require('@babel/core');
-const resolve = require('rollup-plugin-node-resolve');
-const {terser} = require('rollup-plugin-terser');
-const babel = require('rollup-plugin-babel');
-const sizes = require("@atomico/rollup-plugin-sizes");
-import pkg from './package.json';
+import {DEFAULT_EXTENSIONS} from '@babel/core';
+import resolve from 'rollup-plugin-node-resolve';
+import {terser} from 'rollup-plugin-terser';
+import babel from 'rollup-plugin-babel';
+import sizes from "@atomico/rollup-plugin-sizes";
+import multiInput from 'rollup-plugin-multi-input';
+const {createBabelConfig} = require('./createBabelConfig');
+
 
 const external = (id)=> !id.startsWith('.') && !id.startsWith('/');
 
-function outputLib() {
+function outputLib(options) {
     return {
-        input: "src/index.js",
+        input:
+        // "x/*.js",
+            ["./src/index.js", './src/utils.js', './src/routing.js', './src/obi.js'],
         treeshake: true,
         external, // comment this out to include external dependencies
         output: {
-            file: pkg.main,
+            // file: pkg.main,
+            dir: 'lib',// path.join('lib', ''),
             format: 'esm',
             sourcemap: true,
         },
         plugins: [
+            // multiEntry(),
+            multiInput({ relative: 'src/' }),
             resolve({
                 extensions: DEFAULT_EXTENSIONS,
             }),
+            // babel({
+            //     extensions: DEFAULT_EXTENSIONS,
+            //     plugins: [
+            //         '@babel/plugin-syntax-dynamic-import',
+            //         '@babel/plugin-syntax-import-meta',
+            //         ['bundled-import-meta', {importStyle: 'baseURI'}],
+            //     ].filter(_ => !!_),
+            //     presets: [
+            //         [
+            //             '@babel/preset-env',
+            //             {
+            //                 targets: ['chrome 77'],
+            //                 useBuiltIns: false,
+            //                 modules: false,
+            //             },
+            //         ],
+            //     ],
+            // }),
             babel({
-                extensions: DEFAULT_EXTENSIONS,
-                plugins: [
-                    '@babel/plugin-syntax-dynamic-import',
-                    '@babel/plugin-syntax-import-meta',
-                    ['bundled-import-meta', {importStyle: 'baseURI'}],
-                ].filter(_ => !!_),
-                presets: [
-                    [
-                        '@babel/preset-env',
-                        {
-                            targets: ['chrome 77'],
-                            useBuiltIns: false,
-                            modules: false,
-                        },
-                    ],
-                ],
-            }),
+                    babelrc: false,
+                    configFile: false,
+                    ...createBabelConfig({rollup:true, prod: true, buildingLib: true})
+                }
+            ),
             terser({
                 output: {comments: false},
                 mangle: {
@@ -57,5 +70,5 @@ function outputLib() {
     };
 }
 
-export default [outputLib()];
+export default outputLib();
 

@@ -11,7 +11,7 @@ export const till = async (time) => new Promise(resolve => setTimeout(resolve, t
 /*
     stack overflow format html string
  */
-function formatXML(xmlString, indent) {
+export function formatXML(xmlString, indent) {
     indent = indent || "\t"; //can be specified by second argument of the function
 
     var tabs = "";  //store the current indentation
@@ -61,6 +61,8 @@ let mapObjectToHTMLAttributes = (attributes) =>
     ) : "";
 
 
+const TESTING_LIB = false;
+
 export const mount = async ({tag, Component, mountPoint, attributes = {}, children}) => {
 
     tag = tag || randomName();
@@ -75,11 +77,13 @@ export const mount = async ({tag, Component, mountPoint, attributes = {}, childr
 
     let node = mountPoint.firstChild;
 
-    await node._mounted;
+    await node.mounted;
+
+    await TESTING_LIB ? till(500) : false; // the lib doesnt remove the requestAnimationFrame, so you gotta wait a bit longer
 
     // await till(); //wait till the visibility classname is added;
 
-    let select = (selector) => node.shadowRoot.querySelector(selector);
+    let select = (selector) => (node.shadowRoot || node).querySelector(selector);
 
     let click = (selector) => select(selector).dispatchEvent(new CustomEvent('click', {bubbles: true, composed: true}));
 
@@ -90,9 +94,9 @@ export const mount = async ({tag, Component, mountPoint, attributes = {}, childr
         select,
         click,
         node, // the actual web component reference
-        shadowSnapshot: () => formatXML(node.shadowRoot.innerHTML), // '<h1></h1>' returns what is rendered inside the web component / slots
+        shadowSnapshot: () => formatXML((node.shadowRoot || node).innerHTML), // '<h1></h1>' returns what is rendered inside the web component / slots
         lightDomSnapshot: () => mountPoint.innerHTML, //`<${tag} class="___"></${tag}>` returns the "light dom" / the web component tag and light dom children
-        slots: node.shadowRoot.querySelectorAll('slot'),
+        slots: (node.shadowRoot || node).querySelectorAll('slot'),
         getSlotContent: (slot_id = "slot-0", node) => node.shadowRoot.getElementById(slot_id).parentNode.innerHTML
     }
 };
