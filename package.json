@@ -43,6 +43,7 @@
   "scripts": {
     "start": "rollup -c --environment SERVE,PROJECT:demo --watch demo/**",
     "build": "rollup --c --environment BUILD_LIB,PROJECT:lib",
+    "build:demo": "rollup --c --environment BUILD_APP,PROJECT:demo",
     "test": "cross-env NODE_ENV=test karma start --single-run --browsers ChromeHeadless karma.config.js"
   },
   "dependencies": {},
@@ -62,6 +63,7 @@
     "babel-plugin-transform-inline-environment-variables": "^0.4.3",
     "cross-env": "^6.0.3",
     "es-dev-server": "^1.5.0",
+    "intersection-observer": "^0.7.0",
     "jasmine-core": "^3.4.0",
     "karma": "^4.2.0",
     "karma-chrome-launcher": "^3.1.0",

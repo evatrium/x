@@ -2,49 +2,10 @@ import {x, Component, h, Fragment} from "../src";
 import {globalStyles} from "../src/utils";
 import {todos} from "../demo/todos";
 import {obi} from "../src/obi";
+import {Root} from "./root";
+import {Page} from "./page";
 
-globalStyles(// language=CSS
-        `   
-    html {
-            -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            -ms-text-size-adjust: 100%;
-            -webkit-text-size-adjust: 100%;
-        }
-
-        html, body {
-            height: 100%;
-            width: 100%;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            flex: 1 0 auto;
-        }
-
-        .asdf {
-            color: pink;
-        }
-
-        .derp {
-            /*background: purple;*/
-        }
-
-        *, *::before,
-        *::after {
-            box-sizing: border-box;
-        }
-
-        .red {
-            color: red
-        }
-
-        .yellow {
-            color: yellow
-        }
-    `
-);
+import {Nav} from "./nav";
 
 let css = jcss`:host, *, *::before, *::after {box-sizing: border-box;} :host{display:block}`;
 
@@ -95,7 +56,7 @@ const MoveElementTest = x('x-move', class extends Component {
                 <div ref={r => this.derp = r} style={{width: '100%'}}>
 
                     <div ref={r => this.greenRef = r}
-                                  style={{width: '100%', background: 'green', padding: 10, '--bg': 'red'}}>
+                         style={{width: '100%', background: 'green', padding: 10, '--bg': 'red'}}>
                         <h3>Im green!</h3>
                     </div>
 
@@ -114,13 +75,21 @@ const MoveElementTest = x('x-move', class extends Component {
 
 
 const Box = x('x-box', class extends Component {
+    static shadow = true;
 
-    render({Host, host}, {bool = true}) {
+    render({Host, CSS, host}, {bool = true}) {
         return (
-            <div style={{background: 'aliceblue'}}>
-                <button onClick={() => this.emit('hideClick', 'hello')}> hide me</button>
-                <span style={{fontSize: 30, fontWeight: 'bold'}}>hello</span>
-            </div>
+            <Host>
+                <CSS>{/*language=CSS*/jcss`
+                    :host {
+                        background: aliceblue;
+                    }
+                `}</CSS>
+                <div style={{background: 'aliceblue'}}>
+                    <button onClick={() => this.emit('hideClick', 'hello')}> hide me</button>
+                    <span style={{fontSize: 30, fontWeight: 'bold'}}>hello</span>
+                </div>
+            </Host>
         )
     }
 
@@ -166,64 +135,77 @@ export const App = x('x-app', class extends Component {
                 }</CSS>
 
 
-                    <button onClick={()=>this.setState({count: count + 1})} className={todos.todoName === '' ? 'derp' : null} children={'TODOS!!!!' + count}/>
+                <Nav/>
 
-                <button onClick={() => this.setState({bool: !bool})}> show me</button>
+                <Page navTop>
 
-                <div>
-                    {bool ? <Box onHideClick={() => this.setState({bool: !bool})}/> : <div/>}
-                </div>
+                    <div style={{alignSelf: 'flex-start'}}>
+                        <button onClick={() => this.setState({count: count + 1})}
+                                className={todos.todoName === '' ? 'derp' : null} children={'TODOS!!!!' + count}/>
 
+                        <button onClick={() => this.setState({bool: !bool})}> show me</button>
 
-                {/*<button onClick={bool ? null : ()=>console.log('click')} style={{color: bool ? 'red' : 'green'}}>*/}
-                {/*test click*/}
-                {/*</button>*/}
-
-                <button onClick={todos.makeABunch}>
-                    make a bunch!!!
-                </button>
-                ... i dare you
-
-                <br/>
-                <br/>
-
-                <input placeholder="add todo" value={todos.todoName}
-                       onInput={(e) => todos.todoName = e.target.value}/>
-
-                <button onClick={todos.addTodo} style="color:blue">
-                    Add todo !!! :
-                </button>
-
-                <br/>
-
-                <input placeholder="search" value={todos.searchValue}
-                       onInput={(e) => todos.setSearchValue(e.target.value)}/>
+                        <div>
+                            {bool ? <Box onHideClick={() => this.setState({bool: !bool})}/> : <div/>}
+                        </div>
 
 
-                {/*<MoveElementTest/>*/}
+                        {/*<button onClick={bool ? null : ()=>console.log('click')} style={{color: bool ? 'red' : 'green'}}>*/}
+                        {/*test click*/}
+                        {/*</button>*/}
 
-                <div style="width:100%;display:flex">
+                        <button onClick={todos.makeABunch}>
+                            make a bunch!!!
+                        </button>
+                        ... i dare you
 
-                    <ul>
-                        {todos.displayList.map((t) => (
-                            <li key={t.id} style={{padding: 20}}>
-                                <button onClick={() => todos.removeTodo(t)}>X</button>
-                                <x-list-item className={bool ? 'red' : 'yellow'}
-                                             style={{background: bool ? 'purple' : 'blue'}}><b>{t.name}</b>
-                                </x-list-item>
-                            </li>
-                        ))}
+                        <br/>
+                        <br/>
 
-                    </ul>
+                        <input placeholder="add todo" value={todos.todoName}
+                               onInput={(e) => todos.todoName = e.target.value}/>
 
-                </div>
+                        <button onClick={todos.addTodo} style="color:blue">
+                            Add todo !!! :
+                        </button>
+
+                        <br/>
+
+                        <input placeholder="search" value={todos.searchValue}
+                               onInput={(e) => todos.setSearchValue(e.target.value)}/>
 
 
+                        {/*<MoveElementTest/>*/}
+
+                        <div style="width:100%;display:flex">
+
+                            <ul>
+                                {todos.displayList.map((t) => (
+                                    <li key={t.id} style={{padding: 20}}>
+                                        <button onClick={() => todos.removeTodo(t)}>X</button>
+                                        <x-list-item className={bool ? 'red' : 'yellow'}
+                                                     style={{background: bool ? 'purple' : 'blue'}}><b>{t.name}</b>
+                                        </x-list-item>
+                                    </li>
+                                ))}
+
+                            </ul>
+
+                        </div>
+                    </div>
+                </Page>
             </Host>
         )
     }
 
 });
+
+const render = (app, mountPoint) => {
+    document.getElementsByTagName(mountPoint)[0]
+        .appendChild(document.createElement(app));
+};
+
+render('x-app', 'x-root')
 //
 // export const App = x('app', class extends Xelement {
 //

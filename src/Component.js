@@ -385,7 +385,7 @@ export const x = (tag, component, config) => {
         }
     );
 
-    return (props, children) => h(tag, props, children);
+    return (props) => h(tag, props);
 };
 
 
