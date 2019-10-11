@@ -12,7 +12,6 @@ import {
     addListener,
     objectIsEmpty,
     toLowerCase,
-    COMPONENT_MOUNTED_ATTRIBUTE,
     IS_NON_DIMENSIONAL
 } from "./utils";
 
@@ -25,7 +24,6 @@ var removeChild = (parent, child) => parent.removeChild(child),
     EMPTY_OBJ = {},
     EMPTY_ARR = [],
     map = EMPTY_ARR.map,
-    NULL = null,
 
     //fragment type for host node
     HOST_TYPE = '#document-fragment',
@@ -38,11 +36,9 @@ var removeChild = (parent, child) => parent.removeChild(child),
         for (var k in b) out[k] = b[k];
         return out
     },
-
     listener = function (event) {
         this.handlers[event.type](event)
     },
-
     remHandle = node => {
         if (!objectIsEmpty(node.handlers)) {
             for (let k in node.handlers) {
@@ -61,8 +57,6 @@ var removeChild = (parent, child) => parent.removeChild(child),
     },
 
     /* ------------ preact's style property */
-
-
     checkForPx = (key, value) => typeof value === 'number' && IS_NON_DIMENSIONAL.test(key) === false ? value + 'px' : value,
     setStyle = (style, key, value, noCheckNeeded) => {
         key[0] === '-' ? style.setProperty(key, value) :
@@ -71,11 +65,10 @@ var removeChild = (parent, child) => parent.removeChild(child),
     styleNode = (dom, newValue, oldValue) => {
         let _s = dom.style;
         if (isString(newValue)) return _s.cssText = newValue;
-        if (isString(oldValue)) (_s.cssText = '', oldValue = NULL);
+        if (isString(oldValue)) (_s.cssText = '', oldValue = null);
         if (oldValue) for (let i in oldValue) if (!(newValue && i in newValue)) setStyle(_s, i, '');
         if (newValue) for (let i in newValue) if (!oldValue || newValue[i] !== oldValue[i]) setStyle(_s, i, newValue[i]);
     },
-
     /* ------------ */
 
     // i like how stencil has this built in so i figured id try to include it here
@@ -94,7 +87,7 @@ var removeChild = (parent, child) => parent.removeChild(child),
 
 
     patchProperty = (node, key, oldValue, newValue, isSvg) => {
-        if (key === "key") {
+        if (key === "key" || key === 'children') {
         } else if (key.startsWith('on') && !(key in node)) {
             /*
                 referencing stencil's set accessor functionality for many kinds of 'on'-event names
@@ -119,7 +112,7 @@ var removeChild = (parent, child) => parent.removeChild(child),
             updateClassList(node, oldValue, 'remove');
             updateClassList(node, newValue, 'add');
 
-        } else if (!isSvg && key !== "list" && (key in node)) node[key] = newValue == NULL ? "" : newValue;
+        } else if (!isSvg && key !== "list" && (key in node)) node[key] = newValue == null ? "" : newValue;
         else {
 
             updateAttribute(node, key, newValue)
@@ -131,7 +124,6 @@ var removeChild = (parent, child) => parent.removeChild(child),
             ? createTextNode(vnode.name)
             : (isSvg = isSvg || vnode.name === "svg")
                 ? d.createElementNS("http://www.w3.org/2000/svg", vnode.name)
-
                 /*
                     implements the use of a document fragment as a pseudo host element
                     * works with the root element in a web component
@@ -148,12 +140,12 @@ var removeChild = (parent, child) => parent.removeChild(child),
 
             props = vnode.props;
 
-        for (var k in props) node.nodeName !== HOST_TYPE && patchProperty(node, k, NULL, props[k], isSvg);
+        for (var k in props) node.nodeName !== HOST_TYPE && patchProperty(node, k, null, props[k], isSvg);
         for (var i = 0, len = vnode.children.length; i < len; i++) appendChild(node, createNode(vnode.children[i], isSvg));
         return (vnode.node = node)
     },
 
-    getKey = (vnode) => vnode == NULL ? NULL : vnode.key,
+    getKey = (vnode) => vnode == null ? null : vnode.key,
     /*
        Looked at Atomico's code (which uses vdom in web components) and noticed the destroy method
        on the web component base component. Since its the shadow dom, it may be possible that the child
@@ -168,17 +160,16 @@ var removeChild = (parent, child) => parent.removeChild(child),
 
     patchNode = (parent, node, oldVNode, newVNode, isSvg) => {
 
-
         if (oldVNode === newVNode) {
         } else if (
-            oldVNode != NULL &&
+            oldVNode != null &&
             oldVNode.type === TEXT_NODE &&
             newVNode.type === TEXT_NODE
         ) {
             if (oldVNode.name !== newVNode.name) node.nodeValue = newVNode.name
-        } else if (oldVNode == NULL || oldVNode.name !== newVNode.name) {
+        } else if (oldVNode == null || oldVNode.name !== newVNode.name) {
             node = insertBefore(parent, createNode(newVNode, isSvg), node)
-            if (oldVNode != NULL) removeChild(parent, destroy(oldVNode.node))
+            if (oldVNode != null) removeChild(parent, destroy(oldVNode.node))
         } else {
             var tmpVKid,
                 oldVKid,
@@ -192,20 +183,20 @@ var removeChild = (parent, child) => parent.removeChild(child),
                 newHead = 0,
                 oldTail = oldVKids.length - 1,
                 newTail = newVKids.length - 1;
+
             isSvg = isSvg || newVNode.name === "svg";
 
             for (var key in merge(oldVProps, newVProps)) {
                 var _old = oldVProps[key], _new = newVProps[key];
 
                 if ((['value', 'selected', 'checked'].includes(key) ? node[key] : _old) !== _new) {
-
                     newVNode.name !== HOST_TYPE && patchProperty(node, key, _old, _new, isSvg)
                 }
             }
 
             while (newHead <= newTail && oldHead <= oldTail) {
                 if (
-                    (oldKey = getKey(oldVKids[oldHead])) == NULL ||
+                    (oldKey = getKey(oldVKids[oldHead])) == null ||
                     oldKey !== getKey(newVKids[newHead])
                 ) {
                     break
@@ -222,7 +213,7 @@ var removeChild = (parent, child) => parent.removeChild(child),
 
             while (newHead <= newTail && oldHead <= oldTail) {
                 if (
-                    (oldKey = getKey(oldVKids[oldTail])) == NULL ||
+                    (oldKey = getKey(oldVKids[oldTail])) == null ||
                     oldKey !== getKey(newVKids[newTail])
                 ) {
                     break
@@ -250,7 +241,7 @@ var removeChild = (parent, child) => parent.removeChild(child),
                 }
             } else {
                 for (var i = oldHead, keyed = {}, newKeyed = {}; i <= oldTail; i++) {
-                    if ((oldKey = oldVKids[i].key) != NULL) {
+                    if ((oldKey = oldVKids[i].key) != null) {
                         keyed[oldKey] = oldVKids[i]
                     }
                 }
@@ -261,15 +252,15 @@ var removeChild = (parent, child) => parent.removeChild(child),
 
                     if (
                         newKeyed[oldKey] ||
-                        (newKey != NULL && newKey === getKey(oldVKids[oldHead + 1]))
+                        (newKey != null && newKey === getKey(oldVKids[oldHead + 1]))
                     ) {
-                        if (oldKey == NULL) removeChild(node, destroy(oldVKid.node))
+                        if (oldKey == null) removeChild(node, destroy(oldVKid.node))
                         oldHead++
                         continue
                     }
 
-                    if (newKey == NULL || oldVNode.type === RECYCLED_NODE) {
-                        if (oldKey == NULL) {
+                    if (newKey == null || oldVNode.type === RECYCLED_NODE) {
+                        if (oldKey == null) {
                             patchNode(
                                 node,
                                 oldVKid && oldVKid.node,
@@ -286,7 +277,7 @@ var removeChild = (parent, child) => parent.removeChild(child),
                             newKeyed[newKey] = true
                             oldHead++
                         } else {
-                            if ((tmpVKid = keyed[newKey]) != NULL) {
+                            if ((tmpVKid = keyed[newKey]) != null) {
                                 patchNode(
                                     node,
                                     insertBefore(node, tmpVKid.node, oldVKid && oldVKid.node),
@@ -299,7 +290,7 @@ var removeChild = (parent, child) => parent.removeChild(child),
                                 patchNode(
                                     node,
                                     oldVKid && oldVKid.node,
-                                    NULL,
+                                    null,
                                     newVKids[newHead],
                                     isSvg
                                 )
@@ -310,49 +301,62 @@ var removeChild = (parent, child) => parent.removeChild(child),
                 }
 
                 while (oldHead <= oldTail)
-                    if (getKey((oldVKid = oldVKids[oldHead++])) == NULL) removeChild(node, destroy(oldVKid.node));
+                    if (getKey((oldVKid = oldVKids[oldHead++])) == null) removeChild(node, destroy(oldVKid.node));
 
-                for (var i in keyed) if (newKeyed[i] == NULL) removeChild(node, destroy(keyed[i].node))
+                for (var i in keyed) if (newKeyed[i] == null) removeChild(node, destroy(keyed[i].node))
             }
         }
         return (newVNode.node = node)
     },
+
     createVNode = (name, props, children, node, key, type) => ({name, props, children, node, type, key}),
-    createTextVNode = (value, node) => createVNode(value, EMPTY_OBJ, EMPTY_ARR, node, NULL, TEXT_NODE),
-    recycleNode = (node) =>
-        node.nodeType === TEXT_NODE
+
+    createTextVNode = (value, node) => createVNode(value, EMPTY_OBJ, EMPTY_ARR, node, null, TEXT_NODE),
+
+    recycleNode = (node) => {
+        let results = node.nodeType === TEXT_NODE
             ? createTextVNode(node.nodeValue, node)
             : createVNode(
-            toLowerCase(node.nodeName),
-            EMPTY_OBJ,
-            map.call(node.childNodes, recycleNode),
-            node,
-            NULL,
-            RECYCLED_NODE
-            ),
+                toLowerCase(node.nodeName),
+                EMPTY_OBJ,
+                map.call(node.childNodes, recycleNode),
+                node,
+                null,
+                RECYCLED_NODE
+            );
+        return results;
+    },
 
-    patch = (node, vdom) => (
-        ((node = patchNode(
-            node.parentNode,
-            node,
-            node.vdom || recycleNode(node),
-            vdom
-        )).vdom = vdom),
-            node
-    ),
+    patch = (node, vdom) => {
+        //using template as a workaround since template tags have a document fragment as first child
+        if (!node.__mountPoint) appendChild(node, (node.__mountPoint = createElement(vdom.name === HOST_TYPE ? 'template' : vdom.name)));
+        let nodeToPatch = (vdom.name === HOST_TYPE && node.nodeName === HOST_TYPE) ? node : node.__mountPoint;
+        (node = node.__mountPoint = patchNode(
+            nodeToPatch.parentNode, //parent
+            nodeToPatch, // node
+            nodeToPatch.vdom || recycleNode(nodeToPatch), //oldVNode
+            vdom // newVNode
+        )).vdom = vdom;
+        return node
+    },
+
+
     h = function (name, props) {
         for (var vnode, rest = [], children = [], i = arguments.length; i-- > 2;) rest.push(arguments[i]);
+        if ((props = props == null ? {} : props).children != null) {
+            if (rest.length <= 0) rest.push(props.children);
+            delete props.children;
+        }
         while (rest.length > 0) {
             if (isArray((vnode = rest.pop()))) {
                 for (var i = vnode.length; i-- > 0;) rest.push(vnode[i])
-            } else if (vnode === false || vnode === true || vnode == NULL) {
-            } else children.push(isObj(vnode) ? vnode : createTextVNode(vnode));
+            } else if (vnode === false || vnode === true || vnode == null) {
+            } else children.push(typeof vnode === 'object' ? vnode : createTextVNode(vnode));
         }
-        props = props || EMPTY_OBJ
         return isFunc(name)
-            ? name(props, children)
-            : createVNode(name, props, children, NULL, props.key)
+            ? (props.children = props.children || children) && name(props)
+            : createVNode(name, props, children, null, props.key)
     };
 
-export {patch, h, Fragment, removeHandlers, HOST_TYPE, patchProperty, merge, parseClassList, cnObj, styleNode, setStyle}
 
+export {patch, h, Fragment, removeHandlers, HOST_TYPE, patchProperty, merge, parseClassList, cnObj, styleNode, setStyle}

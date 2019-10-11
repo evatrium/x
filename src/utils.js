@@ -11,7 +11,7 @@ export const isString = (thing) => typeof thing === 'string';
 export const isNum = (thing) => !isNaN(parseFloat(thing)) && !isNaN(thing - 0);
 
 
-/*------------------ DOM -------------------------- */
+/*------------------ DOM STUFF -------------------------- */
 const w = window;
 export const d = document;
 export const createElement = (elem) => d.createElement(elem);
@@ -21,30 +21,29 @@ export const toLowerCase = (toLower) => toLower.toLowerCase();
 export const toUpperCase = (toUpper) => toUpper.toUpperCase();
 export const addListener = (to, ev, cb) => to.addEventListener(ev, cb);
 export const removeListener = (from, ev, cb) => from.removeEventListener(ev, cb);
-export const eventListener = (to, ev, cb) => {
-    if (!isArray(to)) return addListener(to, ev, cb), () => removeListener(to, ev, cb);
+export const eventListener = (to, ev, cb, opts) => {
+    if (!isArray(to)) return addListener(to, ev, cb, opts), () => removeListener(to, ev, cb);
     let unListenAll = [];
     to.forEach(l => {
-        addListener(l[0], l[1], l[2]);
+        addListener(l[0], l[1], l[2], l[3]);
         unListenAll.push(() => removeListener(l[0], l[1], l[2]));
     });
     return () => unListenAll.forEach(f => f());
 };
-
-export const is_ie_or_old_edge = () => navigator.userAgent.indexOf("MSIE") !== -1 || !!w.StyleMedia || !!d.documentMode === true;
-
-export const ScrollStopper = (_stopScroll, _xscroll, _yscroll, _w) => {
+export const ScrollLocker = (_stopScroll, _xscroll, _yscroll, _w) => {
     _w = _w || w;
     addListener(_w, 'scroll', () => _stopScroll && _w.scrollTo(_xscroll, _yscroll));
     return {
-        stop: () => {
+        lock: () => {
             _stopScroll = true;
             _xscroll = _w.pageXOffset;// || window.document.documentElement.scrollLeft
             _yscroll = _w.pageYOffset;// || window.document.documentElement.scrollTop;
         },
-        go: () => (_stopScroll = false)
+        letGo: () => (_stopScroll = false)
     }
 };
+export const scrollLocker = ScrollLocker();
+
 
 /*------------------ STYLES -------------------------- */
 
@@ -103,7 +102,6 @@ export const createStyleSheet = (cssText, async) => {
 
 
 /*------------------ WEB COMPONENT -------------------------- */
-export const COMPONENT_MOUNTED_ATTRIBUTE = 'x-mounted';
 /**
  * for parsing the incoming attributes into consumable props
  * @param value
@@ -197,9 +195,153 @@ export const Subie = () => {
     }
 };
 
+//synthetic events
+export const Eventer = (all) => {
+    all = all || Object.create(null);
+    const on = (event, handler) => (all[event] || (all[event] = [])).push(handler);
+    const off = (event, handler) => all[event] && all[event].splice(all[event].indexOf(handler) >>> 0, 1);
+    let counter = 0;
+    const once = (event, handler) => {
+        const func = {};
+        const ename = event + '_' + (counter++) + '_';
+        const oneTimeCall = ename + 'only_called_once';
+        const unregister = ()=> off(event, func[oneTimeCall]);
+        func[oneTimeCall] = () => {
+            handler && handler();
+            unregister();
+        };
+        on(event, func[oneTimeCall]);
+        return unregister;
+    };
+    return {
+        on,
+        off,
+        once,
+        destroy: (event) => delete all[event],
+        emit: function emit(event, data) {
+            (all[event] || []).slice().map((fn) => fn(data));
+            (all['*'] || []).slice().map((fn) => fn(event, data));
+        }
+
+    };
+};
+
+//real dom events
+export const Events = () => {
+    let w = window,
+        handlers = {},
+        Handler = () => {
+            let s = Subie();
+            return {
+                listener: ({detail}) => s.notify(detail),
+                sub: s.sub,
+                unsub: s.unsub
+            }
+        },
+        on = (event, handler) => {
+            if (!handlers[event]) {
+                handlers[event] = Handler();
+                addListener(w, event, handlers[event].listener);
+            }
+            return handlers[event].sub(handler);
+        };
+
+    return {
+        on,
+        once: (event, handler) => {
+            let unsub = on(event, (data) => {
+                handler(data);
+                unsub();
+            });
+            return unsub
+        },
+        emit: (event, data) =>
+            w.dispatchEvent(
+                new CustomEvent(event, {detail: data, bubbles: true, composed: true})
+            ),
+    }
+};
+/*
+   destroyEvent: (event) => {
+        removeListener(w, event, handlers[event].listener);
+        delete handlers[event];
+    }
+*/
+
+export const events = Events();
+
+
+export function debounce(func, wait, immediate) {
+    var timeout;
+    return function() {
+        var context = this, args = arguments;
+        var later = function() {
+            timeout = null;
+            if (!immediate) func.apply(context, args);
+        };
+        var callNow = immediate && !timeout;
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+        if (callNow) func.apply(context, args);
+    };
+}
+
+export const is_ie_or_old_edge = () =>
+    navigator.userAgent.indexOf("MSIE") !== -1 || !!w.StyleMedia || !!d.documentMode === true;
+
+var isChromium = window.chrome,
+    winNav = window.navigator,
+    vendorName = winNav.vendor,
+    isOpera = typeof window.opr !== "undefined",
+    isIEedge = winNav.userAgent.indexOf("Edge") > -1,
+    isIOSChrome = winNav.userAgent.match("CriOS");
+export const isChrome = ()=> isIOSChrome ||  isChromium !== null &&
+    typeof isChromium !== "undefined" &&
+    vendorName === "Google Inc." &&
+    isOpera === false &&
+    isIEedge === false;
+
+
 
 export const def = (obj, prop, handlers) => Object.defineProperty(obj, prop, handlers);
 
+
+export const hexToRgbA = (hex) =>{
+    let c = [...hex.substring(1)];
+    if(c.length === 3) c = [c[0], c[0], c[1], c[1], c[2], c[2]];
+    c = `0x${c.join('')}`;
+    return `rgba(${[(c >> 16) & 255, (c >> 8) & 255, c & 255].join(',')}, 0.1)`;
+};
+
+
+
+export const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min)) + min;
+export const getRandomOneOf = (arr) => arr[getRandomInt(0, arr.length - 1)];
+
+export const sortOrderOfObjArr = (arr, objProp, descend) => {
+    let nameA, nameB;
+    return arr.sort((a, b) => {
+        if (typeOf(a[objProp])=== 'string') {
+            nameA = a[objProp].toLowerCase();
+        } else {
+            nameA = a[objProp];
+        }
+
+        if (typeOf(a[objProp])=== 'string') {
+            nameB = b[objProp].toLowerCase();
+        } else {
+            nameB = b[objProp];
+        }
+
+        if (nameA < nameB) {
+            return descend ? 1 : -1;
+        }
+        if (nameA > nameB) {
+            return descend ? -1 : 1;
+        }
+        return 0;
+    });
+};
 
 /*------------------ CONSTANTS -------------------------- */
 

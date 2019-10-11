@@ -76,7 +76,6 @@ export const mount = async ({tag, Component, mountPoint, attributes = {}, childr
     document.body.appendChild(mountPoint);
 
     let node = mountPoint.firstChild;
-
     await node.mounted;
 
     await TESTING_LIB ? till(500) : false; // the lib doesnt remove the requestAnimationFrame, so you gotta wait a bit longer

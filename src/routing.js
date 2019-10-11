@@ -142,7 +142,9 @@ export const CustomElementsRouter = ({transition, pathMap, noMatch, loadingIndic
                     // in case of slow network and the user decides to locate somewhere else before
                     // the request has finished, check that the pathMap matches the element name before exec the mount
                     // so that the previously requested element doesn't mount over the current
-                    pathMap[location.pathname] === elementName && mount(elementName, to)));
+                    pathMap[location.pathname] === elementName && mount(elementName, to)
+
+                ));
         },
         doRoute = () => {
             let {next, toLast, noChange, replacedLast} = routerSwitch({pathMap, noMatch}),

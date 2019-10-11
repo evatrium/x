@@ -45,7 +45,7 @@ or use class components
 ```js
 import { Component, h, x } from '@iosio/x';
 
-import {obi} from '@iosio/x/lib/obi'
+import {obi} from '@iosio/x/obi'
 
 import {todos as t} from './todosStateAndActions';
 

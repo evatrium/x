@@ -275,7 +275,7 @@ describe('Component lifeCycles', () => {
             willRender: 2,
             render: 1,
             didRender: 1,
-            willUpdate: 0,
+            willUpdate: 1,
             didUpdate: 0,
             didMount: 1,
             lifeCycle: 1,

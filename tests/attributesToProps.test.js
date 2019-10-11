@@ -25,7 +25,7 @@ const createComponent = ({propTypes = {}, renderFunc}) => {
 
         lifeCycle() {
             expectedCalls.lifeCycle();
-            this._unsubs.push(expectedCalls.unsubscribe) // adds 1 call to lifeCycle.unsubscribe
+            this.unsubs.push(expectedCalls.unsubscribe) // adds 1 call to lifeCycle.unsubscribe
             return () => { // adds 1 call to lifeCycle.unsubscribe
                 expectedCalls.willUnmount();
             }
@@ -139,7 +139,7 @@ describe('Component props', () => {
     it('ignores externally set attributes that are not declared as propTypes / observedAttributes', async (done) => {
 
 
-        const propTypes = {};
+        const propTypes = {number:Number};
 
         const attributes = {
             string: 'hello',
@@ -157,7 +157,7 @@ describe('Component props', () => {
                 propTypes,
                 renderFunc:({Host, CSS, host, ...props})=>{
                     expectedCalls.renderedAttributesToProps(props);
-                    return <Host></Host>
+                    return <Host>asdf</Host>
                 }
             })
         });
@@ -166,10 +166,10 @@ describe('Component props', () => {
         let {node, tag, lightDomSnapshot, shadowSnapshot} = results;
 
 
-        expect(expectedCalls.renderedAttributesToProps).toHaveBeenCalledWith({});
+        expect(expectedCalls.renderedAttributesToProps).toHaveBeenCalledWith({number:123});
 
 
-        expect(shadowSnapshot()).toBe('');
+        expect(shadowSnapshot()).toBe('asdf');
 
 
         tests({
@@ -180,6 +180,7 @@ describe('Component props', () => {
             willUnmount: 0,
             unsubscribe: 0
         });
+
 
 
         node.string = 'hello';

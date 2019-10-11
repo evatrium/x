@@ -1,9 +1,11 @@
-import {x, Component, globalStyles, h, Fragment} from "../lib";
+import {x, Component, h, Fragment} from "../src";
+import {globalStyles} from "../src/utils";
 import {todos} from "../demo/todos";
 import {obi} from "../src/obi";
 
 globalStyles(// language=CSS
-        `    html {
+        `   
+    html {
             -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
@@ -26,7 +28,7 @@ globalStyles(// language=CSS
         }
 
         .derp {
-            background: purple;
+            /*background: purple;*/
         }
 
         *, *::before,
@@ -57,6 +59,7 @@ const TestListItem = x('list-item', class extends Component {
         }
     }
 
+
     render({Host, host}, {bool}) {
         return (
             <Host style={{background: bool ? 'green' : 'red'}} className={bool ? 'yellow' : 'red'}>
@@ -71,7 +74,7 @@ const TestListItem = x('list-item', class extends Component {
     }
 
 });
-
+//
 const MoveElementTest = x('x-move', class extends Component {
 
 
@@ -91,18 +94,18 @@ const MoveElementTest = x('x-move', class extends Component {
 
                 <div ref={r => this.derp = r} style={{width: '100%'}}>
 
-                    <TestListItem ref={r => this.greenRef = r}
+                    <div ref={r => this.greenRef = r}
                                   style={{width: '100%', background: 'green', padding: 10, '--bg': 'red'}}>
                         <h3>Im green!</h3>
-                    </TestListItem>
+                    </div>
 
-                    <TestListItem ref={r => this.blueRef = r} style={{width: '100%', background: 'blue'}}>
+                    <div ref={r => this.blueRef = r} style={{width: '100%', background: 'blue'}}>
                         <h3>Im blue!</h3>
-                    </TestListItem>
+                    </div>
 
-                    <TestListItem ref={r => this.redRef = r} style={{width: '100%', background: 'red'}}>
+                    <div ref={r => this.redRef = r} style={{width: '100%', background: 'red'}}>
                         <h3>Im red!</h3>
-                    </TestListItem>
+                    </div>
                 </div>
             </Host>
         )
@@ -137,15 +140,18 @@ const Box = x('x-box', class extends Component {
 
 
 export const App = x('x-app', class extends Component {
-
+    static shadow = true;
     static propTypes = {some: String, cool: Boolean, prop: Number, types: Object, arrrrr: Array};
 
-    state = {bool: true};
+    state = {bool: true, count: 0};
 
     observe = obi(todos); //global state reactivity ... more on this soon
 
+    // didRender(){
+    //     console.log('did render')
+    // }
 
-    render({Host, CSS, host, ...props}, {bool}, context) { //more on context soon
+    render({Host, CSS, host, ...props}, {bool, count}, context) { //more on context soon
 
         return (
             <Host style={{width: '100%'}}
@@ -160,15 +166,13 @@ export const App = x('x-app', class extends Component {
                 }</CSS>
 
 
-                    <h1 className={todos.todoName === '' ? 'derp' : null}>
-                        TODOS!!!!
-                    </h1>
+                    <button onClick={()=>this.setState({count: count + 1})} className={todos.todoName === '' ? 'derp' : null} children={'TODOS!!!!' + count}/>
 
-                    <button onClick={() => this.setState({bool: !bool})}> show me</button>
+                <button onClick={() => this.setState({bool: !bool})}> show me</button>
 
-                    <div>
-                        {bool ? <Box onHideClick={() => this.setState({bool: !bool})}/> : <div/>}
-                    </div>
+                <div>
+                    {bool ? <Box onHideClick={() => this.setState({bool: !bool})}/> : <div/>}
+                </div>
 
 
                 {/*<button onClick={bool ? null : ()=>console.log('click')} style={{color: bool ? 'red' : 'green'}}>*/}
@@ -194,6 +198,9 @@ export const App = x('x-app', class extends Component {
 
                 <input placeholder="search" value={todos.searchValue}
                        onInput={(e) => todos.setSearchValue(e.target.value)}/>
+
+
+                {/*<MoveElementTest/>*/}
 
                 <div style="width:100%;display:flex">
 

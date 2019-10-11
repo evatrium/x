@@ -23,13 +23,40 @@ module.exports = function (config) {
                 require("rollup-plugin-node-resolve")({
                     extensions: [".js", ".ts"]
                 }),
-                require("rollup-plugin-sucrase")({
-                    production: true,
-                    exclude: ["node_modules/**"],
-                    jsxPragma: "h",
-                    transforms: ["typescript", "jsx"]
-                }),
-                require('rollup-plugin-babel')()
+                // require("rollup-plugin-sucrase")({
+                //     production: true,
+                //     exclude: ["node_modules/**"],
+                //     jsxPragma: "h",
+                //     transforms: ["typescript", "jsx"]
+                // }),
+                require('rollup-plugin-babel')({
+                    plugins:[
+                        ['@iosio/babel-plugin-jcss'],
+
+                        ["transform-inline-environment-variables"],
+
+                        '@babel/plugin-syntax-dynamic-import',
+
+                        '@babel/plugin-syntax-import-meta',
+
+                        ['bundled-import-meta', {importStyle: 'baseURI'}],
+
+                        [
+                            "@babel/plugin-transform-react-jsx",
+                            {
+                                "pragma": "h",
+                                "pragmaFrag": "Fragment"
+                            }
+                        ],
+
+                        [
+                            "@babel/plugin-proposal-class-properties",
+                            {
+                                "loose": true
+                            }
+                        ],
+                    ]
+                })
             ],
             output: {
                 format: "iife", // Helps prevent naming collisions.

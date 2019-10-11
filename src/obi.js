@@ -1,12 +1,14 @@
 import {def, extend, isFunc, isObj, Subie} from "./utils";
+import {h} from "./vdom";
 
-export const obi = suspect => {
+export const obi = (suspect, branchNotify) => {
     const {sub, notify} = Subie();
     let makeObi = obj => {
         if (obj.$obi) return obj;
         def(obj, '$obi', {enumerable: false, value: true});
         def(obj, '$batching', {enumerable: false, value: {active: false}});
         def(obj, '$onChange', {enumerable: false, value: update => sub(update)});
+        !branchNotify && def(obj, '$uniqueNotifiers', {enumerable: false, value: true});
         def(obj, '$getState', {
             enumerable: false,
             value: () => Object.keys(obj).reduce((acc, curr) =>
@@ -25,7 +27,7 @@ export const obi = suspect => {
         for (let key in obj) {
             let internal = obj[key];
             if (isFunc(internal) || key.startsWith('$')) continue;
-            if (isObj(internal)) internal = makeObi(obj[key]);
+            if (isObj(internal)) internal = branchNotify ? makeObi(obj[key]) : obi(obj[key]);
             def(obj, key, {
                 enumerable: true,
                 get: () => internal,
@@ -41,8 +43,12 @@ export const obi = suspect => {
     return makeObi(suspect);
 };
 
-export const obiHOC = (component, obiObj, applyProps) => {
-    let ref, subscribed, unsubscribe, observer,
+const setProps = (propsObj, target) => {
+    for (let i in propsObj) target[i] = propsObj[i];
+};
+
+export const obiHOC = (Component_, obiObj, applyProps) => {
+    let _ref, subscribed, observer, unsubs = [],
         update = () => {
             setTimeout(() => { // wait a tick till mounted
                 if (subscribed) return;
@@ -50,17 +56,30 @@ export const obiHOC = (component, obiObj, applyProps) => {
                 observer = new MutationObserver(mutationsList => {
                     if ([...mutationsList[0].removedNodes].includes(ref)) {
                         observer.disconnect();
-                        unsubscribe();
+                        unsubs.forEach(s => s());
                         subscribed = false
                     }
                 });
-                observer.observe(ref.parentNode, {childList: true});
-                applyProps(ref, obiObj);
-                unsubscribe = obiObj.$onChange((data) => applyProps(ref, data));
+                let firstResults = applyProps(_ref, obiObj);
+                if (isObj(firstResults)) setProps(firstResults, _ref);
+                observer.observe(_ref.parentNode, {childList: true});
+                [].concat(obiObj).forEach(o => {
+                    unsubs.push(o.$onChange(data => {
+                        let results = applyProps(_ref, data);
+                        if (isObj(results)) setProps(results, _ref);
+                    }))
+                });
             })
         };
-    return (props, children) => {
+    return ({ref, children, ...props}) => {
         update();
-        return component(extend(props, {ref: r => ref = r}), children)
-    }
+        return <Component_ ref={r => (ref && ref(r), _ref = r)} {...props}>
+            {children}
+        </Component_>
+    };
 };
+
+// const OverlayHoc = obiHOC(Overlay, overlay, () => ({
+//     active: overlay.active
+// }));
+
