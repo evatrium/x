@@ -28,7 +28,7 @@ var removeChild = (parent, child) => parent.removeChild(child),
     //fragment type for host node
     HOST_TYPE = '#document-fragment',
 
-    Fragment = (props, children) => children,
+    Fragment = (props) => props.children,
 
     merge = (a, b, out) => {
         out = {};
