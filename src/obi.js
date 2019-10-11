@@ -47,6 +47,8 @@ const setProps = (propsObj, target) => {
     for (let i in propsObj) target[i] = propsObj[i];
 };
 
+
+
 export const obiHOC = (Component_, obiObj, applyProps) => {
     let _ref, subscribed, observer, unsubs = [],
         update = () => {

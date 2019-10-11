@@ -254,11 +254,6 @@ if (BUILD_LIB) {
             url({limit: 0, fileName: "[dirname][hash][extname]"}),
             terser({
                 output: {comments: false},
-                mangle: {
-                    properties: {
-                        regex: "^_"
-                    }
-                },
                 compress: {
                     passes: 10,
                     drop_console: true,
