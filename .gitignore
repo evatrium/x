@@ -36,4 +36,5 @@ yarn-error.log*
 /routing.*
 /obi.*
 /utils.*
+/common.*
 /scrap.txt

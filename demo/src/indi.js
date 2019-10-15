@@ -1,7 +1,7 @@
-import {x, Component, h, Fragment} from "../src";
-import {globalStyles} from "../src/utils";
-import {todos} from "../demo/todos";
-import {obi} from "../src/obi";
+import {x, Component, h, Fragment, render} from "../../src";
+import {globalStyles} from "../../src/utils";
+import {todos} from "./todos";
+import {obi} from "../../src/obi";
 import {Root} from "./root";
 import {Page} from "./page";
 
@@ -9,7 +9,8 @@ import {Nav} from "./nav";
 
 let css = jcss`:host, *, *::before, *::after {box-sizing: border-box;} :host{display:block}`;
 
-const TestListItem = x('list-item', class extends Component {
+const TestListItem = x('x-list-item', class extends Component {
+    static shadow = true;
 
     state = {bool: true};
 
@@ -21,11 +22,11 @@ const TestListItem = x('list-item', class extends Component {
     }
 
 
-    render({Host, host}, {bool}) {
+    render({Host, CSS}, {bool}) {
         return (
             <Host style={{background: bool ? 'green' : 'red'}} className={bool ? 'yellow' : 'red'}>
 
-                <style>{css + ':host(.red){color:red} :host(.yellow){color:yellow}'}</style>
+                <CSS>{ ':host(.red){color:white} :host(.yellow){color:orange}'}</CSS>
                 <button onClick={() => this.setState({bool: !bool})}>click me</button>
                 <span style={{fontWeight: 'bold', padding: 10}}>
                     <slot/>
@@ -76,8 +77,16 @@ const MoveElementTest = x('x-move', class extends Component {
 
 const Box = x('x-box', class extends Component {
     static shadow = true;
+    // didMount() {
+    //     console.log(this.nodesListening)
+    // }
+    //
+    // willUnmount() {
+    //     console.log(this.nodesListening)
+    // }
 
     render({Host, CSS, host}, {bool = true}) {
+
         return (
             <Host>
                 <CSS>{/*language=CSS*/jcss`
@@ -85,7 +94,7 @@ const Box = x('x-box', class extends Component {
                         background: aliceblue;
                     }
                 `}</CSS>
-                <div style={{background: 'aliceblue'}}>
+                <div style={{background: 'aliceblue'}} onClick={() => console.log('asdf')}>
                     <button onClick={() => this.emit('hideClick', 'hello')}> hide me</button>
                     <span style={{fontSize: 30, fontWeight: 'bold'}}>hello</span>
                 </div>
@@ -116,9 +125,26 @@ export const App = x('x-app', class extends Component {
 
     observe = obi(todos); //global state reactivity ... more on this soon
 
-    // didRender(){
-    //     console.log('did render')
-    // }
+
+    didRender() {
+        // console.log(this.__xAllListeners)
+        // console.log(this.__xAllListeners.get(this.makeAbunch));
+        // console.log(typeof Object.keys(this.__xAllListeners)[0])
+
+    }
+
+
+    didMount() {
+        // this.nodesListening.add(this.makeAbunch);
+        // this.nodesListening.add(this.page);
+        // this.nodesListening.add(this.div1);
+        // this.nodesListening.add(this.div2);
+    }
+
+    didUpdate() {
+
+        // console.log('has it?', this.nodesListening.has(this.div1));
+    }
 
     render({Host, CSS, host, ...props}, {bool, count}, context) { //more on context soon
 
@@ -135,17 +161,19 @@ export const App = x('x-app', class extends Component {
                 }</CSS>
 
 
-                <Nav/>
+                <Nav>
+                    hello nav :)
+                </Nav>
 
-                <Page navTop>
+                <Page navTop ref={r => this.page = r}>
 
-                    <div style={{alignSelf: 'flex-start'}}>
+                    <div style={{alignSelf: 'flex-start'}} ref={r => this.div1 = r}>
                         <button onClick={() => this.setState({count: count + 1})}
                                 className={todos.todoName === '' ? 'derp' : null} children={'TODOS!!!!' + count}/>
 
                         <button onClick={() => this.setState({bool: !bool})}> show me</button>
 
-                        <div>
+                        <div ref={r => this.div2 = r}>
                             {bool ? <Box onHideClick={() => this.setState({bool: !bool})}/> : <div/>}
                         </div>
 
@@ -154,7 +182,7 @@ export const App = x('x-app', class extends Component {
                         {/*test click*/}
                         {/*</button>*/}
 
-                        <button onClick={todos.makeABunch}>
+                        <button onClick={todos.makeABunch} ref={r => this.makeAbunch = r}>
                             make a bunch!!!
                         </button>
                         ... i dare you
@@ -200,12 +228,8 @@ export const App = x('x-app', class extends Component {
 
 });
 
-const render = (app, mountPoint) => {
-    document.getElementsByTagName(mountPoint)[0]
-        .appendChild(document.createElement(app));
-};
 
-render('x-app', 'x-root')
+render(<App/>, document.getElementsByTagName('x-root')[0])
 //
 // export const App = x('app', class extends Xelement {
 //

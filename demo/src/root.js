@@ -1,4 +1,4 @@
-import {x, h} from "../src";
+import {x, h} from "../../src";
 
 
 export const Root = x('x-root', ({Host, CSS}) =>

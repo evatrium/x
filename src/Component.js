@@ -11,17 +11,16 @@ import {
     raf,
     isArray,
     CSSTextToObj,
-    tagStyleCache,
-    CONSTRUCTABLE_STYLE_SHEETS_AVAILABLE
+    globalStyleTagCache,
+    CONSTRUCTABLE_STYLE_SHEETS_AVAILABLE,
+    removeListener
 } from "./utils";
 
 
 import {
     h,
-    patch,
-    removeHandlers,
-    HOST_TYPE,
-    patchProperty,
+    render,
+    setProperty
 } from "./vdom";
 
 
@@ -32,7 +31,6 @@ let PROPS = 'props',
     context = {};
 
 export const provide = (namespace, attach) => context[namespace] = attach;
-
 
 const getShadowParent = element => {
     while (element.parentNode && (element = element.parentNode)) {
@@ -72,13 +70,13 @@ export class Component extends HTMLElement {
          * @param sheets {array|CSSStyleSheet}
          * @returns {string}
          */
-        const adoptSheets = sheets => {
+        const adoptSheets = (sheets, getCombined) => {
             let adopter = shadow ? root : getShadowParent(this);
 
             let combinedCSSTextIfNotAdoptable = '';
 
-            sheets.forEach(customArrayOrSheet => {
-                if (CONSTRUCTABLE_STYLE_SHEETS_AVAILABLE) {
+            [].concat(sheets).forEach(customArrayOrSheet => {
+                if (CONSTRUCTABLE_STYLE_SHEETS_AVAILABLE && !getCombined) {
                     // check if the style sheet was created with createStyleSheet()
                     let sheet = isArray(customArrayOrSheet) ? customArrayOrSheet[0] : customArrayOrSheet;
                     if (sheet && !([].concat(adopter.adoptedStyleSheets).includes(sheet))) {
@@ -91,7 +89,7 @@ export class Component extends HTMLElement {
             return combinedCSSTextIfNotAdoptable
         };
 
-        let hasAdoptedExternalSheets = false, combinedCSSTextIfNotAdoptable = '';
+        let combinedCSSText = '', cssOncePerRenderVerify = 0, renderStyle = false;
         /**
          * optionally use constructable style sheets with fall backs if not supported
          * @param css {string} - css text
@@ -103,38 +101,45 @@ export class Component extends HTMLElement {
          * @returns {*}
          */
         const CSS = ({css, noResets, globalFallback, useStyleTag, styleSheets, children}) => {
-            if (CONSTRUCTABLE_STYLE_SHEETS_AVAILABLE) adoptSheets([rootSheet]);
+            if (cssOncePerRenderVerify > 0) {
+                console.error('<CSS/> should only be used once. Use a style tag to include additional styles.');
+            }
+            cssOncePerRenderVerify++;
+
+            if (renderStyle !== false) return renderStyle;
+
+            // console.log(typeof children);
+            // children = toChildArray(children);
+
             // get the cssText from the props or the first child vNode.
-            let cssText = css || isObj(children[0]) && children[0].name || '';
+            let cssText = css || children || '';
+
             // if using shadow then include the resets by default if noResets is not explicitly set to true.
             if (!noResets && shadow) cssText = DEFAULT_SHADOWROOT_HOST_CSS_RESETS + cssText;
 
-            // adopt the external styleSheets only once.
-            if (!hasAdoptedExternalSheets && isArray(styleSheets)) {
-                combinedCSSTextIfNotAdoptable = adoptSheets(styleSheets);
-                hasAdoptedExternalSheets = true;
+            if (CONSTRUCTABLE_STYLE_SHEETS_AVAILABLE && !useStyleTag) {
+                adoptSheets([rootSheet]);
+                if (rootSheet.cssRules.length === 0) {
+                    rootSheet.replaceSync(cssText);
+                }
+                styleSheets && adoptSheets(styleSheets);
+                renderStyle = null;
+            } else {
+                combinedCSSText = cssText + adoptSheets([rootSheet], true) + (styleSheets ? adoptSheets(styleSheets, true) : '');
+                if (globalFallback && !globalStyleTagCache[tag]) {
+                    globalStyleTagCache[tag] = true;
+                    globalStyles(combinedCSSText);
+                    renderStyle = null;
+                } else renderStyle = <style>{combinedCSSText}</style>;
             }
-            // if no constructableStylesheets and opting-in to a style tag in the head of the document
-            // and the styles have not already been placed (checking tagStyleCache),
-            // then set them only once
-            if (!CONSTRUCTABLE_STYLE_SHEETS_AVAILABLE && globalFallback && !tagStyleCache[tag]) {
-                tagStyleCache[tag] = true;
-                globalStyles(cssText + combinedCSSTextIfNotAdoptable);
-                return null;
-            } else if (!CONSTRUCTABLE_STYLE_SHEETS_AVAILABLE || useStyleTag) { // fallback to a style tag or opt-in
-                return <style>{cssText + combinedCSSTextIfNotAdoptable}</style>;
-            } else if (rootSheet.cssRules.length === 0) { // apply the cssText
-                rootSheet.replaceSync(cssText);
-                return null
-            }
-            return null;
+
+            return renderStyle;
         };
 
-        let usingVHost, lastSelfHostPropsEmpty;
 
+        let lastSelfHostPropsEmpty;
         const Host = ({children, ...selfProps}) => {
-            usingVHost = true; // let the renderers know that we are using a vHost node
-            let kids = h(HOST_TYPE, {}, children);
+            let kids = children;
             //can skip patching the host props during the first render if no props are provided
             if (!this.hasMounted && objectIsEmpty(selfProps)) return (lastSelfHostPropsEmpty = true, kids);
             if (lastSelfHostPropsEmpty && objectIsEmpty(selfProps)) return kids;
@@ -146,13 +151,13 @@ export class Component extends HTMLElement {
                 hostNodeProps[attr === 'class' ? 'className' : attr] = a[i].value;
             }
             //apply host vnode props on 'this', merge in and potentially override individual properties that exist
-            for (let key in selfProps) patchProperty(this, key, hostNodeProps[key], selfProps[key]);
+            for (let key in selfProps) setProperty(this, key, selfProps[key], hostNodeProps[key], false);
             return kids;
         };
 
         this.setState = nextState => {
             extend(this.state, isFunc(nextState) ? nextState(this.state) : nextState || {});
-            return this.update();
+            return this.update();//.then(...)
         };
 
         this.observeObi = obis =>
@@ -169,14 +174,14 @@ export class Component extends HTMLElement {
             ];
         };
 
-        let noRenderResults;
+        let renderResults;
         const initialRenderer = () => {
             let next = renderArgs();
             this.willMount(...next);
             this.willRender(...next);
-            let results = this.render(...next);
-            if (results) patch(root, results);
-            else noRenderResults = true;
+            renderResults = this.render(...next);
+            cssOncePerRenderVerify = 0;
+            renderResults && render(renderResults, root);
             let postInitial = () => {
                 this.unsubs.push(this.lifeCycle(...next)); // optionally return subscriptions to unsub on detach
                 this.didRender(...next);
@@ -193,8 +198,10 @@ export class Component extends HTMLElement {
             this.willUpdate(...next);
             if (this.shouldUpdate) shouldRerender = this.shouldUpdate(...next);
             // returning a falsy value other than undefined will prevent rerender
-            if (noRerender || noRenderResults || (!shouldRerender && (shouldRerender !== undefined))) return;
-            patch(root, this.render(...next));
+            if (noRerender || (!shouldRerender && (shouldRerender !== undefined))) return;
+            renderResults = this.render(...next);
+            cssOncePerRenderVerify = 0;
+            renderResults && render(renderResults, root);
             this.didUpdate(...next);
             this.didRender(...next);
         };
@@ -212,10 +219,9 @@ export class Component extends HTMLElement {
         );
 
         let destroyed;
-
-        this.destroy = (dom) => {
+        this.destroy = () => {
             if (!destroyed) {
-                dom && removeHandlers(dom);
+                render(null, root);
                 this.unsubs.forEach(fn => isFunc(fn) && fn());
                 destroyed = true;
             }
@@ -241,8 +247,8 @@ export class Component extends HTMLElement {
         // the component may inadvertently call this, so check if its connected before calling destroy.
         // can happen if the node is being moved ex:  parent.insertBefore(node, targetNode).
         if (!this.isConnected) {
-            this.willUnmount();
             this.destroy();
+            this.willUnmount();
         }
     }
 
@@ -268,7 +274,9 @@ export class Component extends HTMLElement {
             propTypes, // get the statically set propTypes.
             prototype // prototype - the soon to be - newly instantiated class.
         } = this; // 'this' will references the constructor when used inside static methods.
+
         this.initAttrs = [];
+
         if (!propTypes) return [];
         /* inspired by atomico  */
         let observedAttr = Object.keys(propTypes).map(prop => {
@@ -306,7 +314,6 @@ export class Component extends HTMLElement {
                                     schema.type === Boolean && !value
                                         ? null
                                         : value
-                                    // (!schema.reflect && schema.type === Boolean && value === true) ? '' : value
                                 );
                                 this[IGNORE_ATTR] = false;
                             });
@@ -360,9 +367,7 @@ export class Component extends HTMLElement {
 }
 
 
-export const x = (tag, component, config) => {
-
-    config = config || {};
+export const x = (tag, component, config = {}) => {
 
     let rootSheet,
         isComponent = component.prototype instanceof Component;
@@ -391,6 +396,19 @@ export const x = (tag, component, config) => {
 
 /*
 ------using static template and css
+
+
+  if (tagTemplateCache[tag]) {
+                    root.appendChild(tagTemplateCache[tag].content.cloneNode(true))
+                }else{
+
+                    if ( !tagTemplateCache[tag]) {
+                        template.innerHTML = root.innerHTML;
+                        tagTemplateCache[tag] = template;
+                    }
+                }
+
+
 
         let base, noRenderResults, staticTemplate;
         const initialRenderer = () => {
@@ -606,7 +624,7 @@ export const x = (tag, component, config) => {
 //     raf,
 //     isArray,
 //     CSSTextToObj,
-//     tagStyleCache,
+//     globalStyleTagCache,
 //     CONSTRUCTABLE_STYLE_SHEETS_AVAILABLE
 // } from "./utils";
 //
@@ -711,10 +729,10 @@ export const x = (tag, component, config) => {
 //                 hasAdoptedExternalSheets = true;
 //             }
 //             // if no constructableStylesheets and opting-in to a style tag in the head of the document
-//             // and the styles have not already been placed (checking tagStyleCache),
+//             // and the styles have not already been placed (checking globalStyleTagCache),
 //             // then set them only once
-//             if (!CONSTRUCTABLE_STYLE_SHEETS_AVAILABLE && globalFallback && !tagStyleCache[tag]) {
-//                 tagStyleCache[tag] = true;
+//             if (!CONSTRUCTABLE_STYLE_SHEETS_AVAILABLE && globalFallback && !globalStyleTagCache[tag]) {
+//                 globalStyleTagCache[tag] = true;
 //                 globalStyles(cssText + combinedCSSTextIfNotAdoptable);
 //                 return null;
 //             } else if (!CONSTRUCTABLE_STYLE_SHEETS_AVAILABLE || useStyleTag) { // fallback to a style tag or opt-in

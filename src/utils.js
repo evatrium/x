@@ -89,7 +89,7 @@ export const CSSTextToObj = cssText => {
     return style
 };
 
-export const tagStyleCache = {}; // cache the instance css to the tagName
+export const globalStyleTagCache = {}; // cache the instance css to the tagName
 
 export const createStyleSheet = (cssText, async) => {
     let sheet = false;
@@ -113,8 +113,10 @@ export const formatType = (value, type) => {
     try {
         if (type == Boolean) value = [true, 1, "", "1", "true"].includes(value);
         else if (typeof value == "string") {
-            value = type == Number ? Number(value)
-                : type == Object || type == Array ? JSON.parse(value) : value;
+            value = type == Number
+                ? Number(value)
+                : type == Object || type == Array
+                    ? JSON.parse(value) : value;
         }
         if ({}.toString.call(value) == `[object ${type.name}]`)
             return {value, error: type == Number && Number.isNaN(value)};

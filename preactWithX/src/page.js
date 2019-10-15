@@ -1,4 +1,4 @@
-import {x, h} from "../src";
+import {x, h} from "../../src";
 
 export const Page = x('x-page', ({Host, CSS}) => (
         <Host>

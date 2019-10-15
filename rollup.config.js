@@ -1,71 +1,8 @@
-// import {DEFAULT_EXTENSIONS} from '@babel/core';
-// import resolve from 'rollup-plugin-node-resolve';
-// import {terser} from 'rollup-plugin-terser';
-// import babel from 'rollup-plugin-babel';
-// import sizes from "@atomico/rollup-plugin-sizes";
-// import multiInput from 'rollup-plugin-multi-input';
-// const {createBabelConfig} = require('./createBabelConfig');
-//
-//
-// const external = (id) => !id.startsWith('.') && !id.startsWith('/');
-//
-// function outputLib({input, output}) {
-//     return {
-//         input:
-//         // input,
-//         // 'src/index.js',
-//         // "x/*.js",
-//             ["src/index.js", 'src/utils.js', 'src/routing.js', 'src/obi.js'],
-//         treeshake: true,
-//         external, // comment this out to include external dependencies
-//         output: {
-//             // file: output,
-//             dir: './',
-//             format: 'es',
-//             chunkFileNames: "common.js",
-//             sourcemap: true,
-//         },
-//         plugins: [
-//             // multiInput({ relative: 'src/' }),
-//             resolve({
-//                 extensions: DEFAULT_EXTENSIONS,
-//             }),
-//             babel({
-//                     babelrc: false,
-//                     configFile: false,
-//                     ...createBabelConfig({rollup: true, prod: true, buildingLib: true})
-//                 }
-//             ),
-//             terser({
-//                 output: {comments: false},
-//                 mangle: {
-//                     properties: {
-//                         regex: "^_"
-//                     }
-//                 },
-//                 compress: {
-//                     passes: 10,
-//                     drop_console: true,
-//                     module: true
-//                 }
-//             }),
-//             sizes()
-//         ],
-//     };
-// }
-//
-// export default [
-//     outputLib({}),
-//     // outputLib({input:'src/index.js', output: 'lib/index.js'}),
-//     // outputLib({input:'src/routing.js', output: 'routing/index.js'}),
-//     // outputLib({input:'src/obi.js', output: 'obi/index.js'}),
-// ];
-
-
 import serve from 'rollup-plugin-serve';
 import livereload from 'rollup-plugin-livereload';
 import url from 'rollup-plugin-url';
 import resolve from 'rollup-plugin-node-resolve';
+import {DEFAULT_EXTENSIONS} from '@babel/core';
 import babel from 'rollup-plugin-babel';
 import indexHTML from 'rollup-plugin-index-html';
 import {terser} from "rollup-plugin-terser";
@@ -104,8 +41,8 @@ if (apis && apis[APP_ENV]) process.env.API_URL = apis[APP_ENV];
 let browsers = ['chrome 77'];
 let cssBrowsers = ['last 2 versions'];
 
-const babelPlugins = [
-    ['@iosio/babel-plugin-jcss', {browsers: cssBrowsers}],
+const babelPlugins = browsers => [
+    ['@iosio/babel-plugin-jcss', {browsers}],
     "transform-inline-environment-variables",
     '@babel/plugin-syntax-dynamic-import',
     '@babel/plugin-syntax-import-meta',
@@ -119,15 +56,22 @@ if (!SERVE && !outputDir) dipOut('no outputDir defined on project');
 
 let rollupBuild;
 
-if (SERVE) {
+if (!!SERVE) {
 
+    const entry = src + '/src/index.js';
+
+    const html = src + '/index.html';
+
+
+    console.log(entry);
+    console.log(html);
     process.env.NODE_ENV = 'development';
 
     outputDir = './node_modules/_iosio_temp_dev_build';
 
     rollupBuild = () => ex(`rimraf ${outputDir}`).then(() => ({
-        input: src + '/index.js',
         treeshake: false,
+        entry,
         output: {
             dir: outputDir,
             format: 'esm',
@@ -135,9 +79,12 @@ if (SERVE) {
             chunkFileNames: "[hash].js"
         },
         plugins: [
-            indexHTML({indexHTML: src + '/index.html'}),
-            resolve(),
+            resolve({
+                extensions: DEFAULT_EXTENSIONS,
+            }),
+            indexHTML({indexHTML: html}),
             babel({
+                extensions: DEFAULT_EXTENSIONS,
                 babelrc: false,
                 configFile: false,
                 presets: [
@@ -150,9 +97,9 @@ if (SERVE) {
                         },
                     ]
                 ],
-                plugins: babelPlugins
+                plugins: babelPlugins(browsers)
             }),
-            url({limit: 0, fileName: "[dirname][hash][extname]"}),
+            url({limit: 0, fileName: "[dirname][name][extname]"}),
             serve({contentBase: outputDir, historyApiFallback: true}),
             livereload({watch: outputDir})
         ]
@@ -160,12 +107,12 @@ if (SERVE) {
 
 }
 
-if (BUILD_APP) {
+if (!!BUILD_APP) {
 
     process.env.NODE_ENV = 'production';
 
     const build = (legacy) => ({
-        input: src + '/index.js',
+        input: src + '/src/index.js',
         treeshake: true,
         output: {
             dir: path.join(outputDir, legacy ? '/legacy' : ''),
@@ -189,8 +136,11 @@ if (BUILD_APP) {
                     intersectionObserver: true,
                 },
             }),
-            resolve(),
+            resolve({
+                extensions: DEFAULT_EXTENSIONS,
+            }),
             babel({
+                extensions: DEFAULT_EXTENSIONS,
                 babelrc: false,
                 configFile: false,
                 presets: [
@@ -203,7 +153,7 @@ if (BUILD_APP) {
                         },
                     ]
                 ],
-                plugins: babelPlugins
+                plugins: babelPlugins(cssBrowsers)
             }),
             url({
                 limit: 0,
@@ -215,18 +165,20 @@ if (BUILD_APP) {
                     passes: 10,
                 }
             }),
+            sizes()
         ]
     });
 
-    rollupBuild = () => ex(`rimraf ${outputDir}`).then(() => [multiBuild && build(true), build()].filter(Boolean))
+    rollupBuild = () => ex(`rimraf ${outputDir}`).then(() =>
+        [multiBuild && build(true), build()].filter(Boolean))
 }
 
-if (BUILD_LIB) {
+if (!!BUILD_LIB) {
 
     process.env.NODE_ENV = 'production';
 
     const config = {
-        input: Array.isArray(src) ? src : src + '/index.js',
+        input: Array.isArray(src) ? src : src + 'index.js',
         treeshake: true,
         output: {
             dir: outputDir,
@@ -235,8 +187,11 @@ if (BUILD_LIB) {
             chunkFileNames: "common.js"
         },
         plugins: [
-            resolve(),
+            resolve({
+                extensions: DEFAULT_EXTENSIONS,
+            }),
             babel({
+                extensions: DEFAULT_EXTENSIONS,
                 babelrc: false,
                 configFile: false,
                 presets: [
@@ -249,29 +204,25 @@ if (BUILD_LIB) {
                         },
                     ]
                 ],
-                plugins: babelPlugins
+                plugins: babelPlugins(cssBrowsers)
             }),
             url({limit: 0, fileName: "[dirname][hash][extname]"}),
             terser({
                 output: {comments: false},
                 compress: {
                     passes: 10,
-                    drop_console: true,
-                    module: true
                 }
             }),
+            sizes()
         ]
     };
-
 
     if(['.', '/', './', ''].includes(outputDir) || outputDir.startsWith('.') || outputDir.startsWith('./')){
         rollupBuild = () => config;
     }else{
-        console.error('no way josé')
+        // console.error('no way josé')
         // rollupBuild = () => ex(`rimraf ${outputDir}`).then(() => config)
     }
-
-
 
 }
 
