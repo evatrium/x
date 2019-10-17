@@ -1,6 +1,6 @@
 {
   "name": "@iosio/x",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "Build web components using vdom and jsx",
   "main": "index.js",
   "module": "index.js",
