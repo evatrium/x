@@ -6,6 +6,10 @@ import {todos} from "./todos";
 import {obi} from "../../src/obi";
 // import {Page} from "./page";
 
+import {createStyleSheet} from "../../src/utils";
+
+
+let takeABigSheet = createStyleSheet(`.tester{background:red}`);
 
 const counter = obi({
     num: 0
@@ -39,7 +43,7 @@ const App = x('x-app', class extends Element {
         return (
             <Host>
 
-                <CSS/>
+                <CSS />
                 <button onClick={() => {
                     console.log('clicky click')
                     this.setState(({bool}) => ({bool: !bool}))
@@ -62,12 +66,15 @@ const App = x('x-app', class extends Element {
                     console.log('tester rendered')
                     return (
                         <Host>
-                            <CSS>{/*language=CSS*/jcss`
+                            <CSS styleSheets={[takeABigSheet]}>{/*language=CSS*/jcss`
                                :host{
                                     display:block;
                                     background: green;
                                 }
                             `}</CSS>
+                            <button className={'tester'} onClick={todos.makeABunch}>
+                                make a bunch!!!
+                            </button>
                             <h1>{counter.num}</h1>
                         </Host>
                     )
@@ -81,12 +88,10 @@ const App = x('x-app', class extends Element {
                 <div style={{alignSelf: 'flex-start'}}>
 
 
-                    <button onClick={() => this.setState({bool: !bool})}> show me</button>
 
 
-                    <button onClick={todos.makeABunch}>
-                        make a bunch!!!
-                    </button>
+
+
                     ... i dare you
 
                     <br/>

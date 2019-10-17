@@ -82,6 +82,17 @@ export class Element extends HTMLElement {
                 };
             let adopt = CONSTRUCTABLE_STYLE_SHEETS_AVAILABLE && !getCombined ? constructable : combinedText;
             [].concat(sheets).forEach(adopt);
+            // [].concat(sheets).forEach(customArrayOrSheet => {
+            //     if (CONSTRUCTABLE_STYLE_SHEETS_AVAILABLE) {
+            //         // check if the style sheet was created with createStyleSheet()
+            //         let sheet = isArray(customArrayOrSheet) ? customArrayOrSheet[0] : customArrayOrSheet;
+            //         if (sheet && !([].concat(adopter.adoptedStyleSheets).includes(sheet))) {
+            //             adopter.adoptedStyleSheets = [...adopter.adoptedStyleSheets, sheet];
+            //         }
+            //     } else if (isArray(customArrayOrSheet) && customArrayOrSheet[1]) {
+            //         combinedCSSTextIfNotAdoptable = combinedCSSTextIfNotAdoptable + customArrayOrSheet[1]
+            //     }
+            // });
             return combinedCSSTextIfNotAdoptable
         };
 
@@ -109,12 +120,13 @@ export class Element extends HTMLElement {
             if (!noResets && shadow) cssText = DEFAULT_SHADOWROOT_HOST_CSS_RESETS + cssText;
 
             if (CONSTRUCTABLE_STYLE_SHEETS_AVAILABLE && !useStyleTag) {
-                adoptSheets([rootSheet]);
+                adoptSheets(rootSheet);
                 rootSheet.cssRules.length === 0 && rootSheet.replaceSync(cssText);
                 styleSheets && adoptSheets(styleSheets);
                 renderStyle = null;
             } else {
-                combinedCSSText = cssText + adoptSheets([rootSheet], true) + (styleSheets ? adoptSheets(styleSheets, true) : '');
+                combinedCSSText = cssText + adoptSheets(rootSheet, true) + (styleSheets ? adoptSheets(styleSheets, true) : '');
+
                 if (globalFallback && !globalStyleTagCache[tag]) {
                     globalStyleTagCache[tag] = true;
                     globalStyles(combinedCSSText);
