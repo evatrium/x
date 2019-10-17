@@ -46,7 +46,7 @@
   },
   "scripts": {
     "start": "rollup -c --environment SERVE,PROJECT:demo --watch demo/**",
-    "start:preact": "rollup -c --watch preactWithX/**",
+    "dev:preact": "rollup -c --environment SERVE,PROJECT:preactWithX --watch preactWithX/**",
     "build": "rollup -c --environment BUILD_LIB,PROJECT:lib",
     "build:demo": "rollup --c --environment BUILD_APP,PROJECT:demo",
     "test": "cross-env NODE_ENV=test karma start --single-run --browsers ChromeHeadless karma.config.js"
@@ -75,6 +75,7 @@
     "karma-jasmine": "^2.0.1",
     "karma-rollup-preprocessor": "^7.0.2",
     "karma-spec-reporter": "0.0.32",
+    "preact": "^10.0.0-rc.3",
     "puppeteer": "^1.19.0",
     "rimraf": "^2.6.3",
     "rollup": "^1.15.4",

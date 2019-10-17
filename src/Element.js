@@ -102,7 +102,6 @@ export class Element extends HTMLElement {
             cssOncePerRenderVerify++;
             // dip out if we've got our static non changing styles already..
             if (renderStyle !== false) return renderStyle;
-            // get the cssText from the props or the first child vNode.
             let cssText = css || children || '';
             // if using shadow then include the resets by default if noResets is not explicitly set to true.
             if (!noResets && shadow) cssText = DEFAULT_SHADOWROOT_HOST_CSS_RESETS + cssText;

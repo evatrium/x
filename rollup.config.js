@@ -76,7 +76,7 @@ if (!!SERVE) {
             dir: outputDir,
             format: 'esm',
             sourcemap: false,
-            chunkFileNames: "[hash].js"
+            chunkFileNames: "[name][hash].js"
         },
         plugins: [
             resolve({
