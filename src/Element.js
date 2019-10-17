@@ -376,13 +376,12 @@ export const x = (tag, element, config = {}) => {
 
     return (props) => h(tag, props);
 };
-let X, XShadow;
+let X, XShadow, fn = () => {
+};
 
 if (!TEST_ENV) {
-    X = x('x-x', () => {
-    });
-    XShadow = x('x-shadow', () => {
-    }, {shadow: true});
+    X = x('x-x', fn);
+    XShadow = x('x-shadow', fn, {shadow: true});
 }
 export {X, XShadow}
 
