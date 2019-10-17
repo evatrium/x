@@ -164,7 +164,9 @@ function diffChildren(parentDom, newParentVNode, oldParentVNode, context, isSvg,
             }
             oldVNode = oldVNode || EMPTY_OBJ;
             newDom = diff(parentDom, childVNode, oldVNode, context, isSvg, excessDomChildren, mounts, oldDom, isHydrating);
-            if ((j = childVNode.ref) && oldVNode.ref != j) (refs || (refs = [])).push(j, childVNode._component || newDom, childVNode);
+
+            if ((j = childVNode.ref) && oldVNode.ref != j) (refs || (refs = [])).push(j, newDom, childVNode);
+
             if (newDom != null) {
                 if (firstChildDom == null) firstChildDom = newDom;
                 if (childVNode._lastDomChild != null) {
