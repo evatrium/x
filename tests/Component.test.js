@@ -1,15 +1,15 @@
-import {Component, x, h, Fragment} from "../src";
-// import {Component, x, h, Fragment} from "../lib";
+import {Element, x, h, Fragment} from "../src";
+// import {Element, x, h, Fragment} from "../lib";
 import {randomName, mount} from "./_testUtils";
 
 
 describe('Component', () => {
 
-    it('creates a custom element that extends Component', async (done) => {
+    it('creates a custom element that extends Element', async (done) => {
 
         let tag = randomName();
 
-        x(tag, class extends Component {
+        x(tag, class extends Element {
             render() {
                 return (<div>hello</div>)
             }
@@ -26,11 +26,11 @@ describe('Component', () => {
     });
 
 
-    it('creates a web component with shadow dom that extends Component', async (done) => {
+    it('creates a web component with shadow dom that extends Element', async (done) => {
 
         let tag = randomName();
 
-        x(tag, class extends Component {
+        x(tag, class extends Element {
             static shadow = true;
 
             render() {
@@ -114,11 +114,11 @@ describe('Component', () => {
         done();
     });
 
-    it('Component re-renders correct content when state is updated', async (done) => {
+    it('Element re-renders correct content when state is updated', async (done) => {
 
         let tag = randomName();
 
-        x(tag, class extends Component {
+        x(tag, class extends Element {
 
             state = {count: 0};
 
@@ -168,7 +168,7 @@ describe('Component', () => {
 
         let USER_ASSIGNED_STYLE = 'border: 1px solid red; color: blue';
 
-        x(tag, class extends Component {
+        x(tag, class extends Element {
             static propTypes = {style: String};
             static shadow = true;
             state = {count: 0};

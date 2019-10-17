@@ -1,8 +1,8 @@
 import {x, h} from "../../src";
 
-export const Nav = x('x-nav', ({Host, CSS}) => (
-        <Host>
-            <CSS useStyleTag>{// language=CSS format=true
+export const Nav = x('x-nav', () => (
+        <host>
+            <css>{// language=CSS format=true
                 jcss`
                     :host {
                         display: block;
@@ -20,9 +20,9 @@ export const Nav = x('x-nav', ({Host, CSS}) => (
                         box-shadow: var(--shadow1)
                     }
                 `
-            }</CSS>
+            }</css>
             <slot/>
-        </Host>
+        </host>
     ),
     {
         shadow: true,

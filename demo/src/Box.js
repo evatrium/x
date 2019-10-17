@@ -1,7 +1,7 @@
-import {x, h, Component} from "../../src";
+import {x, h, Element} from "../../src";
 
 
-export const Box = x('x-box', class extends Component {
+export const Box = x('x-box', class extends Element {
     static shadow = true;
 
     static propTypes = {
@@ -10,22 +10,23 @@ export const Box = x('x-box', class extends Component {
 
     count = 0;
 
-    didMount() {
+    componentDidMount() {
         // this.interval = setInterval(() => {
         //     let count = this.count++;
         //     console.log('emitting event: ' + count);
         //     this.emit('testEvent', 'heyyooo: ' + count)
         // }, 2000)
-        this.getAttribute('class')
+        // this.getAttribute('class')
     }
+
 
     render({Host, CSS, style}) {
 
-        console.log(style);
+        // console.log(style);
 
         return (
-            <Host style={{...style, border: '3px solid blue'}}>
-                <CSS useStyleTag>{/*language=CSS*/jcss`
+            <Host style={{...style, border: '3px solid blue', height: 300}}>
+                <CSS>{/*language=CSS*/jcss`
                     :host {
                         display: block;
                         height: 500px;
@@ -33,20 +34,23 @@ export const Box = x('x-box', class extends Component {
                         background: aliceblue;
                     }
                 `}</CSS>
-                <button onClick={()=>{
+                <button onClick={() => {
                     console.log('click', this.count)
                     this.emit('testEvent', 'heyyooo: ' + this.count++)
-                }}> emit </button>
+                }}> emit
+                </button>
 
-                <button onClick={()=>{
+                <button onClick={() => {
                     console.log('click', this.count)
                     this.emit('testEvent', 'heyyooo: ' + this.count++)
-                }}> emit </button>
+                }}> emit
+                </button>
 
-                <button onClick={()=>{
+                <button onClick={() => {
                     console.log('click', this.count)
                     this.emit('testEvent', 'heyyooo: ' + this.count++)
-                }}> emit </button>
+                }}> emit
+                </button>
             </Host>
         )
     }

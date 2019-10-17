@@ -1,6 +1,6 @@
-// import {x, Component, globalStyles, h, Fragment} from "../src";
+// import {x, Element, globalStyles, h, Fragment} from "../src";
 //
-// // import {h, render, Fragment, Component} from "preact";
+// // import {h, render, Fragment, Element} from "preact";
 //
 //
 // import {todos} from "../demo/todos";
@@ -44,7 +44,7 @@
 // );
 //
 //
-// const Test = x('test', class extends Component {
+// const Test = x('test', class extends Element {
 //
 //     static propTypes = {name: String};
 //
@@ -74,7 +74,7 @@
 // });
 //
 //
-// const TestListItem = x('list-item', class extends Component {
+// const TestListItem = x('list-item', class extends Element {
 //     static propTypes = {text: String};
 //
 //     render() {
@@ -108,7 +108,7 @@
 //
 // const $counter = obi(counter);
 //
-// const Counter = x('counter', class extends Component {
+// const Counter = x('counter', class extends Element {
 //     static propTypes = {color: String};
 //
 //     observe = test;
@@ -144,7 +144,7 @@
 // });
 //
 //
-// const Lister = x('lister', class extends Component {
+// const Lister = x('lister', class extends Element {
 //
 //     constructor() {
 //         super();
@@ -186,7 +186,7 @@
 // });
 //
 //
-// const MoveElementTest = x('move', class extends Component {
+// const MoveElementTest = x('move', class extends Element {
 //
 //
 //     move = () => {
@@ -228,7 +228,7 @@
 // });
 //
 //
-// export const App = x('app', class extends Component {
+// export const App = x('app', class extends Element {
 //
 //     static propTypes = {some: String, cool: Boolean, prop: Number, types: Object, yo: Array};
 //

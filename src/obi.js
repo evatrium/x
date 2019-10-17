@@ -1,5 +1,5 @@
 import {def, extend, isFunc, isObj, Subie} from "./utils";
-import {h} from "./vdom";
+import {h} from "../drafts/vdom";
 
 export const obi = (suspect, branchNotify) => {
     const {sub, notify} = Subie();

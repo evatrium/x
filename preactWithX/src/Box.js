@@ -1,7 +1,7 @@
-import {x, h, Component} from "../../src";
+import {x, h, Element} from "../../src";
 
 
-export const Box = x('x-box', class extends Component {
+export const Box = x('x-box', class extends Element {
     static shadow = true;
 
     count = 0;

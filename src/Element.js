@@ -21,7 +21,7 @@ import {
     h,
     render,
     setProperty
-} from "./vdom";
+} from "./xact";
 
 
 // PROPS = Symbol(),
@@ -34,20 +34,16 @@ export const provide = (namespace, attach) => context[namespace] = attach;
 
 const getShadowParent = element => {
     while (element.parentNode && (element = element.parentNode)) {
-        if (element instanceof ShadowRoot) {
-            return element;
-        }
+        if (element instanceof ShadowRoot) return element;
     }
     return document;
 };
 
+
 /* lots of inspiration from superfine, atomico, stencil, and preact*/
-export class Component extends HTMLElement {
-
+export class Element extends HTMLElement {
     context = context;
-
     unsubs = [];
-
     state = {};
 
     constructor() {
@@ -72,9 +68,7 @@ export class Component extends HTMLElement {
          */
         const adoptSheets = (sheets, getCombined) => {
             let adopter = shadow ? root : getShadowParent(this);
-
             let combinedCSSTextIfNotAdoptable = '';
-
             [].concat(sheets).forEach(customArrayOrSheet => {
                 if (CONSTRUCTABLE_STYLE_SHEETS_AVAILABLE && !getCombined) {
                     // check if the style sheet was created with createStyleSheet()
@@ -102,26 +96,20 @@ export class Component extends HTMLElement {
          */
         const CSS = ({css, noResets, globalFallback, useStyleTag, styleSheets, children}) => {
             if (cssOncePerRenderVerify > 0) {
-                console.error('<CSS/> should only be used once. Use a style tag to include additional styles.');
+                console.error('<css/> should only be used once. Use a style tag to include additional styles.');
+                return null;
             }
             cssOncePerRenderVerify++;
-
+            // dip out if we've got our static non changing styles already..
             if (renderStyle !== false) return renderStyle;
-
-            // console.log(typeof children);
-            // children = toChildArray(children);
-
             // get the cssText from the props or the first child vNode.
             let cssText = css || children || '';
-
             // if using shadow then include the resets by default if noResets is not explicitly set to true.
             if (!noResets && shadow) cssText = DEFAULT_SHADOWROOT_HOST_CSS_RESETS + cssText;
 
             if (CONSTRUCTABLE_STYLE_SHEETS_AVAILABLE && !useStyleTag) {
                 adoptSheets([rootSheet]);
-                if (rootSheet.cssRules.length === 0) {
-                    rootSheet.replaceSync(cssText);
-                }
+                if (rootSheet.cssRules.length === 0) rootSheet.replaceSync(cssText);
                 styleSheets && adoptSheets(styleSheets);
                 renderStyle = null;
             } else {
@@ -132,17 +120,15 @@ export class Component extends HTMLElement {
                     renderStyle = null;
                 } else renderStyle = <style>{combinedCSSText}</style>;
             }
-
             return renderStyle;
         };
 
 
         let lastSelfHostPropsEmpty;
         const Host = ({children, ...selfProps}) => {
-            let kids = children;
             //can skip patching the host props during the first render if no props are provided
-            if (!this.hasMounted && objectIsEmpty(selfProps)) return (lastSelfHostPropsEmpty = true, kids);
-            if (lastSelfHostPropsEmpty && objectIsEmpty(selfProps)) return kids;
+            if (!this.hasMounted && objectIsEmpty(selfProps)) return (lastSelfHostPropsEmpty = true, children);
+            if (lastSelfHostPropsEmpty && objectIsEmpty(selfProps)) return children;
             lastSelfHostPropsEmpty = false;
             // convert the attributes from this element into props format
             let hostNodeProps = {}, i = 0, a = this.attributes;
@@ -152,7 +138,7 @@ export class Component extends HTMLElement {
             }
             //apply host vnode props on 'this', merge in and potentially override individual properties that exist
             for (let key in selfProps) setProperty(this, key, selfProps[key], hostNodeProps[key], false);
-            return kids;
+            return children;
         };
 
         this.setState = nextState => {
@@ -174,14 +160,12 @@ export class Component extends HTMLElement {
             ];
         };
 
-        let renderResults;
         const initialRenderer = () => {
             let next = renderArgs();
             this.willMount(...next);
             this.willRender(...next);
-            renderResults = this.render(...next);
+            render( this.render(...next), root);
             cssOncePerRenderVerify = 0;
-            renderResults && render(renderResults, root);
             let postInitial = () => {
                 this.unsubs.push(this.lifeCycle(...next)); // optionally return subscriptions to unsub on detach
                 this.didRender(...next);
@@ -199,9 +183,8 @@ export class Component extends HTMLElement {
             if (this.shouldUpdate) shouldRerender = this.shouldUpdate(...next);
             // returning a falsy value other than undefined will prevent rerender
             if (noRerender || (!shouldRerender && (shouldRerender !== undefined))) return;
-            renderResults = this.render(...next);
+            render(this.render(...next), root);
             cssOncePerRenderVerify = 0;
-            renderResults && render(renderResults, root);
             this.didUpdate(...next);
             this.didRender(...next);
         };
@@ -229,7 +212,6 @@ export class Component extends HTMLElement {
 
         let length = initAttrs.length;
         while (length--) initAttrs[length](this);
-
         this.update();
     }
 
@@ -367,26 +349,26 @@ export class Component extends HTMLElement {
 }
 
 
-export const x = (tag, component, config = {}) => {
+export const x = (tag, element, config = {}) => {
 
     let rootSheet,
-        isComponent = component.prototype instanceof Component;
+        isElement = element.prototype instanceof Element;
 
     if (CONSTRUCTABLE_STYLE_SHEETS_AVAILABLE) rootSheet = new CSSStyleSheet();
 
-    if (isComponent) {
-        component.rootSheet = rootSheet;
-        component.tag = tag;
+    if (isElement) {
+        element.rootSheet = rootSheet;
+        element.tag = tag;
     }
 
     customElements.define(tag,
-        isComponent ? component : class extends Component {
+        isElement ? element : class extends Element {
             static rootSheet = rootSheet;
             static tag = tag;
             static propTypes = config.propTypes;
             static shadow = config.shadow;
             static noRerender = config.noRerender;
-            render = component
+            render = element
         }
     );
 
@@ -394,6 +376,31 @@ export const x = (tag, component, config = {}) => {
 };
 
 
+/*
+
+
+
+  class extends Element {
+            static rootSheet = rootSheet;
+            static tag = tag;
+            static propTypes = component.propTypes || propTypes;
+            static shadow = component.shadow || shadow;
+            static noRerender = component.noRerender || noRerender;
+            render = props => h(component, props)
+        }
+
+
+
+   customElements.define(tag, class extends X {
+            static rootSheet = rootSheet;
+            static tag = tag;
+            static propTypes = config.propTypes;
+            static shadow = config.shadow;
+            static noRerender = config.noRerender;
+            render = props => h(component, props);
+        }
+    );
+ */
 /*
 ------using static template and css
 
@@ -658,7 +665,7 @@ export const x = (tag, component, config = {}) => {
 // };
 //
 // /* lots of inspiration from superfine, atomico, stencil, and preact*/
-// export class Component extends HTMLElement {
+// export class Element extends HTMLElement {
 //
 //     context = context;
 //
@@ -983,7 +990,7 @@ export const x = (tag, component, config = {}) => {
 //     config = config || {};
 //
 //     let rootSheet,
-//         isComponent = component.prototype instanceof Component;
+//         isComponent = component.prototype instanceof Element;
 //
 //     if (CONSTRUCTABLE_STYLE_SHEETS_AVAILABLE) rootSheet = new CSSStyleSheet();
 //
@@ -993,7 +1000,7 @@ export const x = (tag, component, config = {}) => {
 //     }
 //
 //     customElements.define(tag,
-//         isComponent ? component : class extends Component {
+//         isComponent ? component : class extends Element {
 //             static rootSheet = rootSheet;
 //             static tag = tag;
 //             static propTypes = config.propTypes;

@@ -1,8 +1,8 @@
-import {h, x, Component, render} from "../../src";
+import {h, x, Element, render} from "../../src";
 // import {Root} from "./root";
 import {Box} from "./Box";
 
-const App = x('x-app', class extends Component {
+const App = x('x-app', class extends Element {
 
 
     logEvent = ({detail}) => {

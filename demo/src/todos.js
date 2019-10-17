@@ -1,4 +1,5 @@
 import {loremIpsum} from "./lorem";
+import {obi} from "../../src/obi";
 
 const todoStubs = [
     'Make sweet library', 'make cool apps',
@@ -8,7 +9,7 @@ const todoStubs = [
 let count = 0;
 const defaultTodos = todoStubs.map((name) => ({id: count++, name, completed: false}));
 // [...Array(500)]
-export const todos = {
+export const todos = obi({
     list: defaultTodos,
     displayList: defaultTodos,
     todoName: '',
@@ -50,4 +51,4 @@ export const todos = {
     captureEnter(e) {
         if (((e.keyCode || e.which) === 13)) todos.addTodo(e);
     }
-};
+});

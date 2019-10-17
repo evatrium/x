@@ -1,4 +1,4 @@
-import {x, Component, h, Fragment, render} from "../../src";
+import {x, Element, h, Fragment, render} from "../../src";
 import {globalStyles} from "../../src/utils";
 import {todos} from "./todos";
 import {obi} from "../../src/obi";
@@ -9,7 +9,7 @@ import {Nav} from "./nav";
 
 let css = jcss`:host, *, *::before, *::after {box-sizing: border-box;} :host{display:block}`;
 
-const TestListItem = x('x-list-item', class extends Component {
+const TestListItem = x('x-list-item', class extends Element {
     static shadow = true;
 
     state = {bool: true};
@@ -37,7 +37,7 @@ const TestListItem = x('x-list-item', class extends Component {
 
 });
 //
-const MoveElementTest = x('x-move', class extends Component {
+const MoveElementTest = x('x-move', class extends Element {
 
 
     move = () => {
@@ -75,7 +75,7 @@ const MoveElementTest = x('x-move', class extends Component {
 });
 
 
-const Box = x('x-box', class extends Component {
+const Box = x('x-box', class extends Element {
     static shadow = true;
     // didMount() {
     //     console.log(this.nodesListening)
@@ -117,7 +117,7 @@ const Box = x('x-box', class extends Component {
 // });
 
 
-export const App = x('x-app', class extends Component {
+export const App = x('x-app', class extends Element {
     static shadow = true;
     static propTypes = {some: String, cool: Boolean, prop: Number, types: Object, arrrrr: Array};
 

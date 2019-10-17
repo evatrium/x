@@ -13,7 +13,7 @@ import {
     objectIsEmpty,
     toLowerCase,
     IS_NON_DIMENSIONAL
-} from "./utils";
+} from "../src/utils";
 
 // modified version of https://github.com/jorgebucaran/superfine
 

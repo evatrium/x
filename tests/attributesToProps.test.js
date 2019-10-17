@@ -1,5 +1,5 @@
-import {Component, x, h, Fragment} from "../src";
-// import {Component, x, h, Fragment} from "../lib";
+import {Element, x, h, Fragment} from "../src";
+// import {Element, x, h, Fragment} from "../lib";
 import {randomName, mount, till} from "./_testUtils";
 
 var expectedCalls, tests, shouldReRender, tag, node, observable;
@@ -8,7 +8,7 @@ const createComponent = ({propTypes = {}, renderFunc}) => {
 
     let tag = randomName();
 
-    x(tag, class extends Component {
+    x(tag, class extends Element {
 
         static shadow = true;
         static propTypes = propTypes;
@@ -42,7 +42,7 @@ const createComponent = ({propTypes = {}, renderFunc}) => {
 
 
 
-describe('Component props', () => {
+describe('Element props', () => {
 
 
     beforeEach(function () {

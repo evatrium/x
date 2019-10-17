@@ -34,7 +34,7 @@ const options = {};
 
 /**
  * Create an virtual node (used for JSX)
- * @param {import('./internal').VNode["type"]} type The node name or Component
+ * @param {import('./internal').VNode["type"]} type The node name or Element
  * constructor for this virtual node
  * @param {object | null | undefined} [props] The properties of the virtual node
  * @param {Array<import('.').ComponentChildren>} [children] The children of the virtual node
@@ -72,7 +72,7 @@ function createElement(type, props, children) {
 }
 /**
  * Create a VNode (used internally by Preact)
- * @param {import('./internal').VNode["type"]} type The node name or Component
+ * @param {import('./internal').VNode["type"]} type The node name or Element
  * Constructor for this virtual node
  * @param {object | string | number | null} props The properties of this virtual node.
  * If this virtual node represents a text node, this is the text of the node (string or number).
@@ -119,7 +119,7 @@ const isValidElement = vnode => vnode != null && vnode.constructor === undefined
 /**
  * Coerce an untrusted value into a VNode
  * Specifically, this should be used anywhere a user could provide a boolean, string, or number where
- * a VNode or Component is desired instead
+ * a VNode or Element is desired instead
  * @param {boolean | string | number | import('./internal').VNode} possibleVNode A possible VNode
  * @returns {import('./internal').VNode | null}
  */
@@ -142,7 +142,7 @@ function coerceToVNode(possibleVNode) {
 }
 
 /**
- * Base Component class. Provides `setState()` and `forceUpdate()`, which
+ * Base Element class. Provides `setState()` and `forceUpdate()`, which
  * trigger rendering
  * @param {object} props The initial component props
  * @param {object} context The initial context from parent components'
@@ -242,7 +242,7 @@ function getDomSibling(vnode, childIndex) {
 }
 /**
  * Trigger in-place re-rendering of a component.
- * @param {import('./internal').Component} c The component to rerender
+ * @param {import('./internal').Element} c The component to rerender
  */
 
 function renderComponent(component) {
@@ -295,7 +295,7 @@ let q = [];
 
 const defer = typeof Promise == 'function' ? Promise.prototype.then.bind(Promise.resolve()) : setTimeout;
 /*
- * The value of `Component.debounce` must asynchronously invoke the passed in callback. It is
+ * The value of `Element.debounce` must asynchronously invoke the passed in callback. It is
  * important that contributors to Preact can consistently reason about what calls to `setState`, etc.
  * do, and when their effects will be applied. See the links below for some further reading on designing
  * asynchronous APIs.
@@ -306,7 +306,7 @@ const defer = typeof Promise == 'function' ? Promise.prototype.then.bind(Promise
 let prevDebounce = options.debounceRendering;
 /**
  * Enqueue a rerender of a component
- * @param {import('./internal').Component} c The component to rerender
+ * @param {import('./internal').Element} c The component to rerender
  */
 
 function enqueueRender(c) {
@@ -432,7 +432,6 @@ function diffChildren(parentDom, newParentVNode, oldParentVNode, context, isSvg,
                                 break outer;
                             }
                         }
-
                         parentDom.insertBefore(newDom, oldDom);
                     } // Browsers will infer an option's `value` from `textContent` when
                     // no value is present. This essentially bypasses our code to set it
@@ -547,6 +546,9 @@ function setStyle(style, key, value) {
  * @param {boolean} isSvg Whether or not this DOM node is an SVG node or not
  */
 
+function eventProxy(e) {
+    return this._listeners[e.type](options.event ? options.event(e) : e);
+}
 
 export function setProperty(dom, name, value, oldValue, isSvg) {
     name = isSvg ? name === 'className' ? 'class' : name : name === 'class' ? 'className' : name;
@@ -603,16 +605,8 @@ export function setProperty(dom, name, value, oldValue, isSvg) {
         }
     }
 }
-/**
- * Proxy an event to hooked event handlers
- * @param {Event} e The event object from the browser
- * @private
- */
 
 
-function eventProxy(e) {
-    return this._listeners[e.type](options.event ? options.event(e) : e);
-}
 
 /**
  * Diff two virtual nodes and apply proper changes to the DOM
@@ -631,23 +625,31 @@ function eventProxy(e) {
  * @param {boolean} isHydrating Whether or not we are in hydration
  */
 
+let count = 0;
 function diff(parentDom, newVNode, oldVNode, context, isSvg, excessDomChildren, mounts, oldDom, isHydrating) {
     let tmp,
         newType = newVNode.type; // When passing through createElement it assigns the object
     // constructor as undefined. This to prevent JSON-injection.
-
+    console.log(newType, count++)
     if (newVNode.constructor !== undefined) return null;
-    if (tmp = options._diff) tmp(newVNode);
+    // if (tmp = options._diff) tmp(newVNode);
 
     try {
         outer: if (typeof newType === 'function') {
+
+            console.log('type is function', newType);
+            console.log('oldVNode component', oldVNode._component)
+
             let c, isNew, oldProps, oldState, snapshot, clearProcessingException;
+
             let newProps = newVNode.props; // Necessary for createContext api. Setting this property will pass
             // the context value as `this.context` just for this component.
 
-            tmp = newType.contextType;
+            // tmp = newType.contextType;
             let provider = tmp && context[tmp._id];
-            let cctx = tmp ? provider ? provider.props.value : tmp._defaultValue : context; // Get component and set it to `c`
+
+            let cctx = tmp ? provider ? provider.props.value : tmp._defaultValue : context;
+            // Get component and set it to `c`
 
             if (oldVNode._component) {
                 c = newVNode._component = oldVNode._component;
@@ -669,51 +671,56 @@ function diff(parentDom, newVNode, oldVNode, context, isSvg, excessDomChildren, 
                 c._context = context;
                 isNew = c._dirty = true;
                 c._renderCallbacks = [];
-            } // Invoke getDerivedStateFromProps
-
-
-            if (c._nextState == null) {
-                c._nextState = c.state;
             }
 
-            if (newType.getDerivedStateFromProps != null) {
-                assign(c._nextState == c.state ? c._nextState = assign({}, c._nextState) : c._nextState, newType.getDerivedStateFromProps(newProps, c._nextState));
-            } // Invoke pre-render lifecycle methods
+            // Invoke getDerivedStateFromProps
 
 
-            if (isNew) {
-                if (newType.getDerivedStateFromProps == null && c.componentWillMount != null) c.componentWillMount();
-                if (c.componentDidMount != null) mounts.push(c);
-            } else {
-                if (newType.getDerivedStateFromProps == null && c._force == null && c.componentWillReceiveProps != null) {
-                    c.componentWillReceiveProps(newProps, cctx);
-                }
+            // if (c._nextState == null) {
+            //     c._nextState = c.state;
+            // }
 
-                if (!c._force && c.shouldComponentUpdate != null && c.shouldComponentUpdate(newProps, c._nextState, cctx) === false) {
-                    c.props = newProps;
-                    c.state = c._nextState;
-                    c._dirty = false;
-                    c._vnode = newVNode;
-                    newVNode._dom = oldVNode._dom;
-                    newVNode._children = oldVNode._children;
+            // if (newType.getDerivedStateFromProps != null) {
+            //     assign(c._nextState == c.state ? c._nextState = assign({}, c._nextState) : c._nextState, newType.getDerivedStateFromProps(newProps, c._nextState));
+            // }
 
-                    for (tmp = 0; tmp < newVNode._children.length; tmp++) {
-                        if (newVNode._children[tmp]) newVNode._children[tmp]._parent = newVNode;
-                    }
+            // Invoke pre-render lifecycle methods
 
-                    break outer;
-                }
 
-                if (c.componentWillUpdate != null) {
-                    c.componentWillUpdate(newProps, c._nextState, cctx);
-                }
-            }
+            // if (isNew) {
+            //     // if (newType.getDerivedStateFromProps == null && c.componentWillMount != null) c.componentWillMount();
+            //     // if (c.componentDidMount != null) mounts.push(c);
+            // } else {
+            //     if (newType.getDerivedStateFromProps == null && c._force == null && c.componentWillReceiveProps != null) {
+            //         c.componentWillReceiveProps(newProps, cctx);
+            //     }
+            //
+            //     if (!c._force && c.shouldComponentUpdate != null && c.shouldComponentUpdate(newProps, c._nextState, cctx) === false) {
+            //         c.props = newProps;
+            //         c.state = c._nextState;
+            //         c._dirty = false;
+            //         c._vnode = newVNode;
+            //         newVNode._dom = oldVNode._dom;
+            //         newVNode._children = oldVNode._children;
+            //
+            //         for (tmp = 0; tmp < newVNode._children.length; tmp++) {
+            //             if (newVNode._children[tmp]) newVNode._children[tmp]._parent = newVNode;
+            //         }
+            //
+            //         break outer;
+            //     }
+            //
+            //     if (c.componentWillUpdate != null) {
+            //         c.componentWillUpdate(newProps, c._nextState, cctx);
+            //     }
+            // }
 
             oldProps = c.props;
             oldState = c.state;
             c.context = cctx;
             c.props = newProps;
             c.state = c._nextState;
+
             if (tmp = options._render) tmp(newVNode);
             c._dirty = false;
             c._vnode = newVNode;
@@ -722,9 +729,9 @@ function diff(parentDom, newVNode, oldVNode, context, isSvg, excessDomChildren, 
             let isTopLevelFragment = tmp != null && tmp.type == Fragment && tmp.key == null;
             newVNode._children = toChildArray(isTopLevelFragment ? tmp.props.children : tmp);
 
-            if (c.getChildContext != null) {
-                context = assign(assign({}, context), c.getChildContext());
-            }
+            // if (c.getChildContext != null) {
+            //     context = assign(assign({}, context), c.getChildContext());
+            // }
 
             if (!isNew && c.getSnapshotBeforeUpdate != null) {
                 snapshot = c.getSnapshotBeforeUpdate(oldProps, oldState);
@@ -736,16 +743,17 @@ function diff(parentDom, newVNode, oldVNode, context, isSvg, excessDomChildren, 
             c._renderCallbacks = [];
             tmp.some(cb => {
                 cb.call(c);
-            }); // Don't call componentDidUpdate on mount or when we bailed out via
+            });
+            // Don't call componentDidUpdate on mount or when we bailed out via
             // `shouldComponentUpdate`
 
-            if (!isNew && oldProps != null && c.componentDidUpdate != null) {
-                c.componentDidUpdate(oldProps, oldState, snapshot);
-            }
-
-            if (clearProcessingException) {
-                c._pendingError = c._processingException = null;
-            }
+            // if (!isNew && oldProps != null && c.componentDidUpdate != null) {
+            //     c.componentDidUpdate(oldProps, oldState, snapshot);
+            // }
+            //
+            // if (clearProcessingException) {
+            //     c._pendingError = c._processingException = null;
+            // }
 
             c._force = null;
         } else {
@@ -759,18 +767,19 @@ function diff(parentDom, newVNode, oldVNode, context, isSvg, excessDomChildren, 
 
     return newVNode._dom;
 }
+
 function commitRoot(mounts, root) {
     let c;
 
-    while (c = mounts.pop()) {
-        try {
-            c.componentDidMount();
-        } catch (e) {
-            options._catchError(e, c._vnode);
-        }
-    }
+    // while (c = mounts.pop()) {
+    //     try {
+    //         c.componentDidMount();
+    //     } catch (e) {
+    //         options._catchError(e, c._vnode);
+    //     }
+    // }
 
-    if (options._commit) options._commit(root);
+    // if (options._commit) options._commit(root);
 }
 /**
  * Diff two virtual nodes representing DOM element
@@ -942,7 +951,7 @@ function doRender(props, state, context) {
 
 
 options._catchError = function (error, vnode, oldVNode) {
-    /** @type {import('../internal').Component} */
+    /** @type {import('../internal').Element} */
     let component;
 
     for (; vnode = vnode._parent;) {
@@ -982,8 +991,18 @@ function render(vnode, parentDom, replaceNode) {
     let oldVNode = isHydrating ? null : replaceNode && replaceNode._children || parentDom._children;
     vnode = createElement(Fragment, null, [vnode]);
     let mounts = [];
-    diff(parentDom, isHydrating ? parentDom._children = vnode : (replaceNode || parentDom)._children = vnode, oldVNode || EMPTY_OBJ, EMPTY_OBJ, parentDom.ownerSVGElement !== undefined, replaceNode && !isHydrating ? [replaceNode] : oldVNode ? null : EMPTY_ARR.slice.call(parentDom.childNodes), mounts, replaceNode || EMPTY_OBJ, isHydrating);
-    commitRoot(mounts, vnode);
+    diff(
+        parentDom,
+        isHydrating ? parentDom._children = vnode : (replaceNode || parentDom)._children = vnode,
+        oldVNode || EMPTY_OBJ,
+        EMPTY_OBJ,
+        parentDom.ownerSVGElement !== undefined,
+        replaceNode && !isHydrating ? [replaceNode] : oldVNode ? null : EMPTY_ARR.slice.call(parentDom.childNodes),
+        mounts,
+        replaceNode || EMPTY_OBJ,
+        isHydrating
+    );
+    // commitRoot(mounts, vnode);
 }
 /**
  * Update an existing DOM element with data from a Preact virtual node
@@ -1065,4 +1084,4 @@ function createContext(defaultValue) {
     return context;
 }
 
-export { Component, Fragment, unmount as _unmount, cloneElement, createContext, createElement, createRef, createElement as h, hydrate, isValidElement, options, render, toChildArray };
+export { Component, Fragment, unmount as _unmount, cloneElement, createElement, createRef, createElement as h, hydrate, isValidElement, options, render, toChildArray };

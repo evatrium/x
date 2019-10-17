@@ -13,7 +13,7 @@ import {
     CSSTextToObj,
 
     CONSTRUCTABLE_STYLE_SHEETS_AVAILABLE
-} from "./utils";
+} from "../src/utils";
 
 
 import {

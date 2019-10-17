@@ -1,5 +1,5 @@
-import {Component, x, h, Fragment} from "../src";
-// import {Component, x, h, Fragment} from "../lib";
+import {Element, x, h, Fragment} from "../src";
+// import {Element, x, h, Fragment} from "../lib";
 import {randomName, mount, till} from "./_testUtils";
 
 // import {obi} from "../lib/obi";
@@ -14,7 +14,7 @@ const createComponent = () => {
 
     observable = obi({observableValue: 'hello'});
 
-    x(tag, class extends Component {
+    x(tag, class extends Element {
 
         static propTypes = {
             testText: {type: String, reflect: true, value: ''}
@@ -87,7 +87,7 @@ const createComponent = () => {
 };
 
 
-describe('Component lifeCycles', () => {
+describe('Element lifeCycles', () => {
 
 
     beforeEach(function () {
