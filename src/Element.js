@@ -38,7 +38,7 @@ const getShadowParent = element => {
 };
 
 
-/* lots of inspiration from superfine, atomico, stencil, and preact*/
+/* lots of inspiration from atomico, stencil, and preact*/
 export class Element extends HTMLElement {
     context = context;
     unsubs = [];

@@ -2,7 +2,7 @@
 <img src="https://img.shields.io/circleci/project/github/iosio/x.svg?style=flat-square" /><img src="https://img.shields.io/npm/v/@iosio/x.svg?style=flat-square" /><img src="https://img.shields.io/bundlephobia/minzip/@iosio/x.svg?style=flat-square" />
 > create web components using vdom and jsx
 
-Inspiration: stencil, superfine, atomico, preact and open-wc
+Inspiration: atomico, stencil, preact
 
 ## Installation 
 ```sh
