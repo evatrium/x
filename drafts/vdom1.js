@@ -2,7 +2,7 @@ import {
     d,
     updateAttribute,
     appendChild,
-    createElement,
+    createElem,
     createTextNode,
     isFunc,
     isObj,
@@ -136,7 +136,7 @@ var removeChild = (parent, child) => parent.removeChild(child),
                 */
                 : (vnode.name === HOST_TYPE)
                     ? d.createDocumentFragment()
-                    : createElement(vnode.name),
+                    : createElem(vnode.name),
 
             props = vnode.props;
 
@@ -334,7 +334,7 @@ var removeChild = (parent, child) => parent.removeChild(child),
     patch = (node, vdom) => {
         //using template as a workaround since template tags have a document fragment as first child
         if (!node.__mountPoint){
-            appendChild(node, (node.__mountPoint = createElement(vdom.name === HOST_TYPE ? 'template' : vdom.name)));
+            appendChild(node, (node.__mountPoint = createElem(vdom.name === HOST_TYPE ? 'template' : vdom.name)));
         }
 
 

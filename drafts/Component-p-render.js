@@ -3,7 +3,7 @@ import {
     updateAttribute,
     propToAttr,
     attrToProp,
-    createElement,
+    createElem,
     appendChild,
     TEST_ENV,
     def, extend, isFunc, isObj, objectIsEmpty,
@@ -445,7 +445,7 @@ export const x = (tag, component, config = {}) => {
                 let results = this.render(...next);
                 if (results) {
 
-                    let mountPoint = createElement(usingVHost ? 'template' : results.name);
+                    let mountPoint = createElem(usingVHost ? 'template' : results.name);
                     appendChild(root, mountPoint);
                     base = patch(usingVHost && shadow ? root : mountPoint, results);
 
@@ -532,10 +532,10 @@ export const x = (tag, component, config = {}) => {
 
 // if ( usingVHost && shadow) {
 //
-//     // let mountPoint = createElement(usingVHost ? 'template');
+//     // let mountPoint = createElem(usingVHost ? 'template');
 //     // usingVHost &&
 //
-//     appendChild(template.content, createElement('template'));
+//     appendChild(template.content, createElem('template'));
 //
 //     console.log('using vhost', !!usingVHost);
 //     console.log('using shadow', !!shadow);
@@ -559,10 +559,10 @@ export const x = (tag, component, config = {}) => {
 // }
 // else if ( usingVHost) {
 //
-//     // let mountPoint = createElement(usingVHost ? 'template');
+//     // let mountPoint = createElem(usingVHost ? 'template');
 //     // usingVHost &&
 //
-//     appendChild(template.content, createElement('template'));
+//     appendChild(template.content, createElem('template'));
 //
 //     console.log('using vhost', !!usingVHost);
 //     console.log('using shadow', !!shadow);
@@ -585,10 +585,10 @@ export const x = (tag, component, config = {}) => {
 //
 //
 // }else{
-//     // let mountPoint = createElement(usingVHost ? 'template');
+//     // let mountPoint = createElem(usingVHost ? 'template');
 //     // usingVHost &&
 //
-//     appendChild(template.content, createElement(results.name));
+//     appendChild(template.content, createElem(results.name));
 //
 //     console.log('using vhost', !!usingVHost);
 //     console.log('using shadow', !!shadow);
@@ -618,7 +618,7 @@ export const x = (tag, component, config = {}) => {
 //     updateAttribute,
 //     propToAttr,
 //     attrToProp,
-//     createElement,
+//     createElem,
 //     appendChild,
 //     TEST_ENV,
 //     def, extend, isFunc, isObj, objectIsEmpty,
@@ -792,7 +792,7 @@ export const x = (tag, component, config = {}) => {
 //             this.willRender(...next);
 //             let results = this.render(...next);
 //             if (results) {
-//                 let mountPoint = createElement(usingVHost ? 'template' : results.name);
+//                 let mountPoint = createElem(usingVHost ? 'template' : results.name);
 //                 appendChild(root, mountPoint);
 //                 base = patch(usingVHost && shadow ? root : mountPoint, results);
 //             } else noRenderResults = true;

@@ -2,7 +2,7 @@ import {
     d,
     updateAttribute,
     appendChild,
-    createElement,
+    createElem,
     createTextNode,
     isFunc,
     isObj,
@@ -156,7 +156,7 @@ export const Renderer = () => {
                      )*/
                     : (vnode.name === HOST_TYPE)
                         ? d.createDocumentFragment()
-                        : createElement(vnode.name),
+                        : createElem(vnode.name),
 
                 props = vnode.props;
 
@@ -327,7 +327,7 @@ export const Renderer = () => {
 
         render = (vdom, node) => {
             if (!node.__mountPoint)//using a template element as a workaround since template tags have a document fragment as first child
-                appendChild(node, (node.__mountPoint = createElement(vdom.name === HOST_TYPE ? 'template' : vdom.name)));
+                appendChild(node, (node.__mountPoint = createElem(vdom.name === HOST_TYPE ? 'template' : vdom.name)));
 
             let nodeToPatch = (vdom.name === HOST_TYPE && node.nodeName === HOST_TYPE) ? node : node.__mountPoint;
 

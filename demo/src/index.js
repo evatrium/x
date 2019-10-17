@@ -2,7 +2,7 @@ import {h, x, Element} from "../../src";
 import {Root} from "./root";
 import {Box} from "./Box";
 import {todos} from "./todos";
-import {Page} from "./page";
+// import {Page} from "./page";
 
 
 const Tester = ()=>(
@@ -28,8 +28,8 @@ const App = x('x-app', class extends Element {
 
     render({Host, CSS}, {bool}) {
         return (
-            <host>
-                <css/>
+            <Host>
+                <CSS/>
                 <button onClick={() =>{
                     console.log('clicky click')
                     this.setState(({bool}) => ({bool: !bool}))
@@ -38,7 +38,11 @@ const App = x('x-app', class extends Element {
                 </button>
 
 
-                {/*----------- todos ----------------*/}
+                {bool &&
+                <x-box ontestEvent={this.logEvent} style={{border: '2px solid red'}}/>
+                }
+
+                {/*/!*----------- todos ----------------*!/*/}
 
 
                 <div style={{alignSelf: 'flex-start'}}>
@@ -88,7 +92,7 @@ const App = x('x-app', class extends Element {
                 </div>
 
 
-                {/*----------- todos ----------------*/}
+                {/*/!*----------- todos ----------------*!/*/}
 
 
 
@@ -101,15 +105,12 @@ const App = x('x-app', class extends Element {
 
 
 
-                {/*{bool &&*/}
-                {/*<x-box ontestEvent={this.logEvent} style={{border: '2px solid red'}}/>*/}
-                {/*}*/}
-            </host>
+            </Host>
         )
     }
 });
 
-// let mountPoint = document.createElement('div');
+// let mountPoint = document.createElem('div');
 //
 let mountPoint = document.getElementsByTagName('x-root')[0];
 

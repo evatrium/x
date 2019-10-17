@@ -3,7 +3,7 @@ import {
     updateAttribute,
     propToAttr,
     attrToProp,
-    createElement,
+    createElem,
     appendChild,
     TEST_ENV,
     def, extend, isFunc, isObj, objectIsEmpty,

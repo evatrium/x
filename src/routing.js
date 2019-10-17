@@ -1,4 +1,4 @@
-import { isArray, isObj, createElement, appendChild, extend} from "./utils";
+import { isArray, isObj, createElem, appendChild, extend} from "./utils";
 import {obi} from "./obi";
 
 export const createRouting = () => {
@@ -127,7 +127,7 @@ export const CustomElementsRouter = ({transition, pathMap, noMatch, loadingIndic
         m = (parentNode, elem) => (clearMountingPoint(parentNode), appendChild(parentNode, elem)),
         mount = (elementName, parentNode) => {
             clearTimeout(timeout);
-            elem = createElement(elementName);
+            elem = createElem(elementName);
             if (initial || !transition) return m(parentNode, elem);
             extend(parentNode.style, {transition: transitionStyle, opacity: 0});
             timeout = setTimeout(() => {

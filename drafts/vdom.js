@@ -85,7 +85,7 @@ function createElement(type, props, children) {
 
 function createVNode(type, props, key, ref) {
     // V8 seems to be better at detecting type shapes if the object is allocated from the same call site
-    // Do not inline into createElement and coerceToVNode!
+    // Do not inline into createElem and coerceToVNode!
     const vnode = {
         type,
         props,
@@ -628,7 +628,7 @@ export function setProperty(dom, name, value, oldValue, isSvg) {
 let count = 0;
 function diff(parentDom, newVNode, oldVNode, context, isSvg, excessDomChildren, mounts, oldDom, isHydrating) {
     let tmp,
-        newType = newVNode.type; // When passing through createElement it assigns the object
+        newType = newVNode.type; // When passing through createElem it assigns the object
     // constructor as undefined. This to prevent JSON-injection.
     console.log(newType, count++)
     if (newVNode.constructor !== undefined) return null;
