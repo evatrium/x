@@ -1,3 +1,5 @@
+
+
 const EMPTY_OBJ = {};
 const EMPTY_ARR = [];
 const IS_NON_DIMENSIONAL = /acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|zoo|^ord|^--/i;
@@ -24,6 +26,14 @@ const createVNode = (type, props, key, ref) => ({
     _component: null,
     constructor: undefined
 });
+
+
+function applyRef(ref, value, vnode) {
+    try {
+        if (typeof ref == 'function') ref(value);else ref.current = value;
+    } catch (e) {
+    }
+}
 
 function coerceToVNode(possibleVNode) {
     if (possibleVNode == null || typeof possibleVNode === 'boolean') return null;
