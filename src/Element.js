@@ -4,6 +4,7 @@ import {
     propToAttr,
     attrToProp,
     TEST_ENV,
+    extend,
     def, isFunc, isObj, objectIsEmpty,
     globalStyles,
     raf,
@@ -43,8 +44,6 @@ export class Element extends HTMLElement {
     unsubs = [];
     state = {};
     observe = null;
-
-    _observesStyle = false;
 
     constructor() {
         super();
@@ -164,7 +163,7 @@ export class Element extends HTMLElement {
             // if watching the style property, convert the style string ('width:100%;') into an object ({width: '100%'})
             if (this._observesStyle) this[PROPS].style = CSSTextToObj(this.style.cssText);
             return [
-                {Host, CSS, host: this, ...this[PROPS]},
+                extend({Host, CSS, host: this}, this[PROPS]),
                 this.state,
                 this.context
             ];

@@ -57,9 +57,9 @@ const App = x('x-app', class extends Element {
                     inc
                 </button>
 
-                {/*{bool &&*/}
-                {/*<x-box ontestEvent={this.logEvent} style={{border: '2px solid red'}}/>*/}
-                {/*}*/}
+                {bool &&
+                <x-box ontestEvent={this.logEvent} style={'border: 2px solid red; border-radius: 30px'}/>
+                }
 
                 {bool && <x-shadow observe={counter} props={counter} render={({Host, CSS}) => {
 

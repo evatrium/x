@@ -34,7 +34,7 @@ export const Box = x('x-box', class extends Element {
 
     render({Host, CSS, style}, {color}) {
 
-        // console.log(style);
+        console.log('box style props', style);
 
         return (
             <Host style={{...style, border: '3px solid blue', height: 300}}>
