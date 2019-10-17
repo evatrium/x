@@ -151,7 +151,7 @@ export class Element extends HTMLElement {
         };
 
         this.setState = nextState => {
-            this.state = {...this.state, ...(isFunc(nextState) ? nextState(this.state) : nextState || {})};
+            this.state = {...this.state, ...(isFunc(nextState) ? nextState(this.state) : (nextState || {}))};
             return this.update();//can call .then(...)
         };
 
@@ -376,11 +376,15 @@ export const x = (tag, element, config = {}) => {
 
     return (props) => h(tag, props);
 };
+let X, XShadow;
 
-export const X = x('x-x', () => {
-});
-export const XShadow = x('x-shadow', () => {
-}, {shadow: true});
+if (!TEST_ENV) {
+    X = x('x-x', () => {
+    });
+    XShadow = x('x-shadow', () => {
+    }, {shadow: true});
+}
+export {X, XShadow}
 
 
 /*

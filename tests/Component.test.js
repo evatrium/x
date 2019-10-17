@@ -1,4 +1,4 @@
-import {Element, x, h, Fragment} from "../src";
+import {Element, x, h} from "../src";
 // import {Element, x, h, Fragment} from "../lib";
 import {randomName, mount} from "./_testUtils";
 
