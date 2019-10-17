@@ -81,17 +81,6 @@ export class Element extends HTMLElement {
                 };
             let adopt = CONSTRUCTABLE_STYLE_SHEETS_AVAILABLE && !getCombined ? constructable : combinedText;
             [].concat(sheets).forEach(adopt);
-            // [].concat(sheets).forEach(customArrayOrSheet => {
-            //     if (CONSTRUCTABLE_STYLE_SHEETS_AVAILABLE) {
-            //         // check if the style sheet was created with createStyleSheet()
-            //         let sheet = isArray(customArrayOrSheet) ? customArrayOrSheet[0] : customArrayOrSheet;
-            //         if (sheet && !([].concat(adopter.adoptedStyleSheets).includes(sheet))) {
-            //             adopter.adoptedStyleSheets = [...adopter.adoptedStyleSheets, sheet];
-            //         }
-            //     } else if (isArray(customArrayOrSheet) && customArrayOrSheet[1]) {
-            //         combinedCSSTextIfNotAdoptable = combinedCSSTextIfNotAdoptable + customArrayOrSheet[1]
-            //     }
-            // });
             return combinedCSSTextIfNotAdoptable
         };
 
