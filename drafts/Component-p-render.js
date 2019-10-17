@@ -166,7 +166,7 @@ export class Component extends HTMLElement {
 
         const renderArgs = () => {
             // if watching the style property, convert the style string ('width:100%;') into an object ({width: '100%'})
-            if (this._watchesForStyleUpdates) this[PROPS].style = CSSTextToObj(this.style.cssText);
+            if (this._observesStyle) this[PROPS].style = CSSTextToObj(this.style.cssText);
             return [
                 extend({Host, CSS, host: this}, this[PROPS]),
                 this.state,
@@ -258,7 +258,7 @@ export class Component extends HTMLElement {
         // if we are setting our own attribute that we are tracking, then ignore this update.
         if (this[IGNORE_ATTR] === attr || oldValue === newValue) return;
         // opt-in notify for styles
-        if (attr === 'style' && this._watchesForStyleUpdates) this.update();
+        if (attr === 'style' && this._observesStyle) this.update();
         // else convert kabob-case to CamelCase
         else this[attrToProp(attr)] = newValue;
     }
@@ -332,7 +332,7 @@ export class Component extends HTMLElement {
         });
         // let the prototype know to listen for style changes here since ('style' in prototype) is true
         // and since we want more control over how the style is updated ex: {...userStyles, ...ourStyles}
-        this.prototype._watchesForStyleUpdates = observedAttr.includes('style');
+        this.prototype._observesStyle = observedAttr.includes('style');
         return observedAttr;
     };
 
@@ -777,7 +777,7 @@ export const x = (tag, component, config = {}) => {
 //
 //         const renderArgs = () => {
 //             // if watching the style property, convert the style string ('width:100%;') into an object ({width: '100%'})
-//             if (this._watchesForStyleUpdates) this[PROPS].style = CSSTextToObj(this.style.cssText);
+//             if (this._observesStyle) this[PROPS].style = CSSTextToObj(this.style.cssText);
 //             return [
 //                 extend({Host, CSS, host: this}, this[PROPS]),
 //                 this.state,
@@ -870,7 +870,7 @@ export const x = (tag, component, config = {}) => {
 //         // if we are setting our own attribute that we are tracking, then ignore this update.
 //         if (this[IGNORE_ATTR] === attr || oldValue === newValue) return;
 //         // opt-in notify for styles
-//         if (attr === 'style' && this._watchesForStyleUpdates) this.update();
+//         if (attr === 'style' && this._observesStyle) this.update();
 //         // else convert kabob-case to CamelCase
 //         else this[attrToProp(attr)] = newValue;
 //     }
@@ -943,7 +943,7 @@ export const x = (tag, component, config = {}) => {
 //         });
 //         // let the prototype know to listen for style changes here since ('style' in prototype) is true
 //         // and since we want more control over how the style is updated ex: {...userStyles, ...ourStyles}
-//         this.prototype._watchesForStyleUpdates = observedAttr.includes('style');
+//         this.prototype._observesStyle = observedAttr.includes('style');
 //         return observedAttr;
 //     };
 //

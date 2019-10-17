@@ -43,7 +43,7 @@ export const ColorComponent = x('x-color',
 or use class components
 
 ```js
-import { Component, h, x } from '@iosio/x';
+import { Element, h, x } from '@iosio/x';
 
 import {obi} from '@iosio/x/obi'
 
@@ -51,7 +51,7 @@ import {todos as t} from './todosStateAndActions';
 
 const todos = obi(t);
 
-export const App = x('x-app', class extends Component {
+export const App = x('x-app', class extends Element {
     static shadow = true; 
     //set the propTypes for your observedAttributes
     //the incoming attributes will be converted to the 
@@ -118,7 +118,7 @@ export const App = x('x-app', class extends Component {
                 <ColorComponent/>
                
                 {/* or use them by their tag name*/}
-                <x-color onBtnClick={()=>console.log('the inside button was clicked')}>
+                <x-color onbtnClick={()=>console.log('the inside button was clicked')}>
                     heyooo
                 </x-color>
 

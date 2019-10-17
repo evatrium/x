@@ -1,14 +1,26 @@
 import {x, h, Element} from "../../src";
 
 
+const TestBox = ({color = 'red'})=>(
+    <div style={{height: 100, width: 100, background: color}}>
+
+    </div>
+)
+
 export const Box = x('x-box', class extends Element {
     static shadow = true;
 
     static propTypes = {
-        style: String
+        style: String,
+        hello: Function,
     };
 
     count = 0;
+
+    state = {
+        color: 'red'
+    };
+
 
     componentDidMount() {
         // this.interval = setInterval(() => {
@@ -20,7 +32,7 @@ export const Box = x('x-box', class extends Element {
     }
 
 
-    render({Host, CSS, style}) {
+    render({Host, CSS, style}, {color}) {
 
         // console.log(style);
 
@@ -32,6 +44,11 @@ export const Box = x('x-box', class extends Element {
                         height: 500px;
                         width: 500px;
                         background: aliceblue;
+                    }
+                    .hello{
+                        height: 100px;
+                        width: 100px;
+                        background: green;
                     }
                 `}</CSS>
                 <button onClick={() => {
@@ -51,6 +68,23 @@ export const Box = x('x-box', class extends Element {
                     this.emit('testEvent', 'heyyooo: ' + this.count++)
                 }}> emit
                 </button>
+                <br/>
+                <br/>
+                <br/>
+                <div>
+                    <button onClick={()=> this.setState({color: color === 'red' ? 'blue' : 'red'})}>
+                        test
+                    </button>
+
+                    <TestBox color={color}/>
+
+                    <div dangerouslySetInnerHTML={{__html: '<div class="hello"></div>'}}>
+
+                        <TestBox color={color}/>
+
+                    </div>
+
+                </div>
             </Host>
         )
     }

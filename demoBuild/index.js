@@ -216,7 +216,7 @@ class J extends HTMLElement {
             return e
         };
         this.setState = e => (x(this.state, t(e) ? e(this.state) : e || {}), this.update()), this.observeObi = e => [].concat(e).forEach(e => e.$onChange && this.unsubs.push(e.$onChange(this.update)));
-        const S = () => (this._watchesForStyleUpdates && (this[$].style = p(this.style.cssText)), [x({
+        const S = () => (this._observesStyle && (this[$].style = p(this.style.cssText)), [x({
             Host: v,
             CSS: m,
             host: this
@@ -253,7 +253,7 @@ class J extends HTMLElement {
     }
 
     attributeChangedCallback(e, t, l) {
-        this[B] !== e && t !== l && ("style" === e && this._watchesForStyleUpdates ? this.update() : this[y(e)] = l)
+        this[B] !== e && t !== l && ("style" === e && this._observesStyle ? this.update() : this[y(e)] = l)
     }
 
     static get observedAttributes() {
@@ -272,7 +272,7 @@ class J extends HTMLElement {
                 }
             }), o.value && this.initAttrs.push(e => e[l] = o.value), n
         });
-        return this.prototype._watchesForStyleUpdates = l.includes("style"), l
+        return this.prototype._observesStyle = l.includes("style"), l
     }
 
     willMount() {

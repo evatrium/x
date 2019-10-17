@@ -3,17 +3,12 @@ import {isFunc, isBool, isString, isNum, isArray, d} from "./utils";
 const EMPTY_OBJ = {};
 const EMPTY_ARR = [];
 const IS_NON_DIMENSIONAL = /acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|zoo|^ord|^--/i;
-
+const SET_INNER_HTML = 'dangerouslySetInnerHTML'
 const Fragment = props => props.children;
 
 function assign(obj, props) {
     for (let i in props) obj[i] = props[i];
     return (obj);
-}
-
-function removeNode(node) {
-    let parentNode = node.parentNode;
-    if (parentNode) parentNode.removeChild(node);
 }
 
 const createVNode = (type, props, key, ref) => ({
@@ -109,7 +104,7 @@ const applyRef = (ref, value) => isFunc(ref) ? ref(value) : (ref.current = value
         } else if (name !== 'list' && name !== 'tagName'
             && name !== 'form' && !isSvg && name in dom) {
             dom[name] = value == null ? '' : value;
-        } else if (!isFunc(value) && name !== 'dangerouslySetInnerHTML') {
+        } else if (!isFunc(value) && name !== SET_INNER_HTML) {
             if (name !== (name = name.replace(/^xlink:?/, ''))) {
                 if (value == null || value === false) dom.removeAttributeNS('http://www.w3.org/1999/xlink', name.toLowerCase());
                 else dom.setAttributeNS('http://www.w3.org/1999/xlink', name.toLowerCase(), value);
@@ -127,9 +122,9 @@ const applyRef = (ref, value) => isFunc(ref) ? ref(value) : (ref.current = value
             r.base = r._parentDom = null;
         }
         if (r = vnode._children) for (let i = 0; i < r.length; i++) if (r[i]) unmount(r[i], parentVNode, skipRemove);
-        if (dom != null) removeNode(dom);
+        if (dom != null) dom.remove();
     },
-    diffChildren = (parentDom, newParentVNode, oldParentVNode, context, isSvg, excessDomChildren, oldDom, isHydrating) => {
+    diffChildren = (parentDom, newParentVNode, oldParentVNode, context, isSvg, excessDomChildren, oldDom) => {
         let i, j, oldVNode, newDom, sibDom, firstChildDom, refs;
         let oldChildren = oldParentVNode && oldParentVNode._children || EMPTY_ARR;
         let oldChildrenLength = oldChildren.length;
@@ -159,7 +154,7 @@ const applyRef = (ref, value) => isFunc(ref) ? ref(value) : (ref.current = value
                     }
                 }
                 oldVNode = oldVNode || EMPTY_OBJ;
-                newDom = diff(parentDom, childVNode, oldVNode, context, isSvg, excessDomChildren, oldDom, isHydrating);
+                newDom = diff(parentDom, childVNode, oldVNode, context, isSvg, excessDomChildren, oldDom);
 
                 if ((j = childVNode.ref) && oldVNode.ref != j) (refs || (refs = [])).push(j, newDom, childVNode);
 
@@ -193,7 +188,8 @@ const applyRef = (ref, value) => isFunc(ref) ? ref(value) : (ref.current = value
         newParentVNode._dom = firstChildDom;
 
         if (excessDomChildren != null && !isFunc(newParentVNode.type))
-            for (i = excessDomChildren.length; i--;) if (excessDomChildren[i] != null) removeNode(excessDomChildren[i]);
+            for (i = excessDomChildren.length; i--;) if (excessDomChildren[i] != null) excessDomChildren[i].remove();
+
         for (i = oldChildrenLength; i--;) if (oldChildren[i] != null)
             unmount(oldChildren[i], oldChildren[i]);
 
@@ -201,7 +197,7 @@ const applyRef = (ref, value) => isFunc(ref) ? ref(value) : (ref.current = value
     },
 
 
-    diffElementNodes = (dom, newVNode, oldVNode, context, isSvg, excessDomChildren, isHydrating) => {
+    diffElementNodes = (dom, newVNode, oldVNode, context, isSvg, excessDomChildren) => {
         let i,
             oldProps = oldVNode.props,
             newProps = newVNode.props,
@@ -231,23 +227,22 @@ const applyRef = (ref, value) => isFunc(ref) ? ref(value) : (ref.current = value
         } else if (newVNode !== oldVNode) {
             if (excessDomChildren != null) excessDomChildren = EMPTY_ARR.slice.call(dom.childNodes);
             oldProps = oldVNode.props || EMPTY_OBJ;
-            let oldHtml = oldProps.dangerouslySetInnerHTML;
-            let newHtml = newProps.dangerouslySetInnerHTML;
-            if (!isHydrating) {
-                if (oldProps === EMPTY_OBJ) {
-                    oldProps = {};
-                    for (let i = 0; i < dom.attributes.length; i++) oldProps[dom.attributes[i].name] = dom.attributes[i].value;
-                }
-                if (newHtml || oldHtml) {
-                    if (!newHtml || !oldHtml || newHtml.__html != oldHtml.__html) dom.innerHTML = newHtml && newHtml.__html || '';
-                }
+            let oldHtml = oldProps[SET_INNER_HTML], newHtml = newProps[SET_INNER_HTML];
+
+            if (oldProps === EMPTY_OBJ) {
+                oldProps = {};
+                for (let i = 0; i < dom.attributes.length; i++) oldProps[dom.attributes[i].name] = dom.attributes[i].value;
             }
-            diffProps(dom, newProps, oldProps, isSvg, isHydrating);
+            if (newHtml || oldHtml) {
+                if (!newHtml || !oldHtml || newHtml.__html != oldHtml.__html) dom.innerHTML = newHtml && newHtml.__html || '';
+            }
+
+            diffProps(dom, newProps, oldProps, isSvg);
             newVNode._children = newVNode.props.children;
             if (!newHtml) {
                 diffChildren(
                     dom, newVNode, oldVNode, context, newVNode.type === 'foreignObject' ? false : isSvg,
-                    excessDomChildren, EMPTY_OBJ, isHydrating
+                    excessDomChildren, EMPTY_OBJ
                 );
             }
             if ('value' in newProps && newProps.value !== undefined && newProps.value !== dom.value) dom.value = newProps.value == null ? '' : newProps.value;
@@ -257,7 +252,7 @@ const applyRef = (ref, value) => isFunc(ref) ? ref(value) : (ref.current = value
         return dom;
     },
 
-    diff = (parentDom, newVNode, oldVNode, context, isSvg, excessDomChildren, oldDom, isHydrating) => {
+    diff = (parentDom, newVNode, oldVNode, context, isSvg, excessDomChildren, oldDom) => {
         let tmp, newType = newVNode.type;
         if (newVNode.constructor !== undefined) return null;
         if (isFunc(newType)) {
@@ -266,9 +261,9 @@ const applyRef = (ref, value) => isFunc(ref) ? ref(value) : (ref.current = value
             tmp = newType(newProps);
             let isTopLevelFragment = tmp != null && tmp.type == Fragment && tmp.key == null;
             newVNode._children = toChildArray(isTopLevelFragment ? tmp.props.children : tmp);
-            diffChildren(parentDom, newVNode, oldVNode, context, isSvg, excessDomChildren, oldDom, isHydrating);
+            diffChildren(parentDom, newVNode, oldVNode, context, isSvg, excessDomChildren, oldDom);
         } else {
-            newVNode._dom = diffElementNodes(oldVNode._dom, newVNode, oldVNode, context, isSvg, excessDomChildren, isHydrating);
+            newVNode._dom = diffElementNodes(oldVNode._dom, newVNode, oldVNode, context, isSvg, excessDomChildren);
         }
         return newVNode._dom;
     },

@@ -4,7 +4,7 @@ import {
     propToAttr,
     attrToProp,
     TEST_ENV,
-    def, extend, isFunc, isObj, objectIsEmpty,
+    def, isFunc, isObj, objectIsEmpty,
     globalStyles,
     raf,
     isArray,
@@ -42,13 +42,16 @@ export class Element extends HTMLElement {
     context = context;
     unsubs = [];
     state = {};
+    observe = null;
+
+    _observesStyle = false;
 
     constructor() {
         super();
         // the statically set fields from the class that extends this
         let {initAttrs, shadow, rootSheet, noRerender, tag} = this.constructor;
 
-        let root = !shadow ? this : this.attachShadow({mode: ['open', 'closed'].includes(shadow) ? shadow : 'open'});
+        let root = !shadow ? this : this.attachShadow({mode: shadow === true ? 'open' : shadow});
 
         this[PROPS] = {};
 
@@ -65,18 +68,20 @@ export class Element extends HTMLElement {
          */
         const adoptSheets = (sheets, getCombined) => {
             let adopter = shadow ? root : getShadowParent(this);
-            let combinedCSSTextIfNotAdoptable = '';
-            [].concat(sheets).forEach(customArrayOrSheet => {
-                if (CONSTRUCTABLE_STYLE_SHEETS_AVAILABLE && !getCombined) {
-                    // check if the style sheet was created with createStyleSheet()
+            let combinedCSSTextIfNotAdoptable = '',
+                constructable = customArrayOrSheet => {
                     let sheet = isArray(customArrayOrSheet) ? customArrayOrSheet[0] : customArrayOrSheet;
                     if (sheet && !([].concat(adopter.adoptedStyleSheets).includes(sheet))) {
                         adopter.adoptedStyleSheets = [...adopter.adoptedStyleSheets, sheet];
                     }
-                } else if (isArray(customArrayOrSheet) && customArrayOrSheet[1]) {
-                    combinedCSSTextIfNotAdoptable = combinedCSSTextIfNotAdoptable + customArrayOrSheet[1]
-                }
-            });
+                },
+                combinedText = customArrayOrSheet => {
+                    if (isArray(customArrayOrSheet) && customArrayOrSheet[1]) {
+                        combinedCSSTextIfNotAdoptable = combinedCSSTextIfNotAdoptable + customArrayOrSheet[1]
+                    }
+                };
+            let adopt = CONSTRUCTABLE_STYLE_SHEETS_AVAILABLE && !getCombined ? constructable : combinedText;
+            [].concat(sheets).forEach(adopt);
             return combinedCSSTextIfNotAdoptable
         };
 
@@ -105,7 +110,7 @@ export class Element extends HTMLElement {
 
             if (CONSTRUCTABLE_STYLE_SHEETS_AVAILABLE && !useStyleTag) {
                 adoptSheets([rootSheet]);
-                if (rootSheet.cssRules.length === 0) rootSheet.replaceSync(cssText);
+                rootSheet.cssRules.length === 0 && rootSheet.replaceSync(cssText);
                 styleSheets && adoptSheets(styleSheets);
                 renderStyle = null;
             } else {
@@ -127,19 +132,16 @@ export class Element extends HTMLElement {
             if (lastSelfHostPropsEmpty && objectIsEmpty(selfProps)) return children;
             lastSelfHostPropsEmpty = false;
             // convert the attributes from this element into props format
-            let hostNodeProps = {}, i = 0, a = this.attributes;
-            for (i = a.length; i--;) {
-                let attr = a[i].name;
-                hostNodeProps[attr === 'class' ? 'className' : attr] = a[i].value;
-            }
+            let hostNodeProps = {}, i, a = this.attributes;
+            for (i = a.length; i--;) hostNodeProps[a[i].name] = a[i].value;
             //apply host vnode props on 'this', merge in and potentially override individual properties that exist
-            for (let key in selfProps) setProperty(this, key, selfProps[key], hostNodeProps[key], false);
+            for (let i in selfProps) setProperty(this, i, selfProps[i], hostNodeProps[i], false);
             return children;
         };
 
         this.setState = nextState => {
-            extend(this.state, isFunc(nextState) ? nextState(this.state) : nextState || {});
-            return this.update();//.then(...)
+            this.state = {...this.state, ...(isFunc(nextState) ? nextState(this.state) : nextState || {})};
+            return this.update();//can call .then(...)
         };
 
         this.observeObi = obis =>
@@ -148,9 +150,9 @@ export class Element extends HTMLElement {
 
         const renderArgs = () => {
             // if watching the style property, convert the style string ('width:100%;') into an object ({width: '100%'})
-            if (this._watchesForStyleUpdates) this[PROPS].style = CSSTextToObj(this.style.cssText);
+            if (this._observesStyle) this[PROPS].style = CSSTextToObj(this.style.cssText);
             return [
-                extend({Host, CSS, host: this}, this[PROPS]),
+                {Host, CSS, host: this, ...this[PROPS]},
                 this.state,
                 this.context
             ];
@@ -160,7 +162,7 @@ export class Element extends HTMLElement {
             let next = renderArgs();
             this.willMount(...next);
             this.willRender(...next);
-            render( this.render(...next), root);
+            render(this.render(...next), root);
             cssOncePerRenderVerify = 0;
             let postInitial = () => {
                 this.unsubs.push(this.lifeCycle(...next)); // optionally return subscriptions to unsub on detach
@@ -194,16 +196,13 @@ export class Element extends HTMLElement {
         };
 
         this.emit = (name, detail, from, options) => (from || this).dispatchEvent(
-            new CustomEvent(name, extend({detail, bubbles: true, composed: true}, options || {}))
+            new CustomEvent(name, {detail, bubbles: true, composed: true, ...options})
         );
 
-        let destroyed;
         this.destroy = () => {
-            if (!destroyed) {
-                render(null, root);
-                this.unsubs.forEach(fn => isFunc(fn) && fn());
-                destroyed = true;
-            }
+            this.willUnmount();
+            render(null, root);
+            this.unsubs.forEach(fn => isFunc(fn) && fn());
         };
 
         let length = initAttrs.length;
@@ -214,28 +213,24 @@ export class Element extends HTMLElement {
     connectedCallback() {
         // connected callback may be called inadvertently, so check this.
         if (this.hasMounted) return;
-        // if state is using an obi (mini observable object) then push the sub into unsubs
-        this.state.$onChange && this.unsubs.push(this.state.$onChange(this.update));
         this.observe && this.observeObi(this.observe);
         // resolve the pending promise that was set to this.mounted.
         this._mount();
     }
 
     disconnectedCallback() {
-        // the component may inadvertently call this, so check if its connected before calling destroy.
+        // web components may inadvertently call this, so check if its connected before calling destroy.
         // can happen if the node is being moved ex:  parent.insertBefore(node, targetNode).
-        if (!this.isConnected) {
-            this.destroy();
-            this.willUnmount();
-        }
+        if (this.isConnected) return;
+        this.destroy();
     }
 
     attributeChangedCallback(attr, oldValue, newValue) {
         // if we are setting our own attribute that we are tracking, then ignore this update.
         if (this[IGNORE_ATTR] === attr || oldValue === newValue) return;
         // opt-in notify for styles
-        if (attr === 'style' && this._watchesForStyleUpdates) this.update();
-        // else convert kabob-case to CamelCase
+        if (attr === 'style' && this._observesStyle) this.update();
+        // else convert kabob-case to camelCase
         else this[attrToProp(attr)] = newValue;
     }
 
@@ -308,7 +303,7 @@ export class Element extends HTMLElement {
         });
         // let the prototype know to listen for style changes here since ('style' in prototype) is true
         // and since we want more control over how the style is updated ex: {...userStyles, ...ourStyles}
-        this.prototype._watchesForStyleUpdates = observedAttr.includes('style');
+        this.prototype._observesStyle = observedAttr.includes('style');
         return observedAttr;
     };
 
@@ -371,32 +366,12 @@ export const x = (tag, element, config = {}) => {
     return (props) => h(tag, props);
 };
 
-
-/*
-
-
-
-  class extends Element {
-            static rootSheet = rootSheet;
-            static tag = tag;
-            static propTypes = component.propTypes || propTypes;
-            static shadow = component.shadow || shadow;
-            static noRerender = component.noRerender || noRerender;
-            render = props => h(component, props)
-        }
+export const X = x('x-x', () => {
+});
+export const XShadow = x('x-shadow', () => {
+}, {shadow: true});
 
 
-
-   customElements.define(tag, class extends X {
-            static rootSheet = rootSheet;
-            static tag = tag;
-            static propTypes = config.propTypes;
-            static shadow = config.shadow;
-            static noRerender = config.noRerender;
-            render = props => h(component, props);
-        }
-    );
- */
 /*
 ------using static template and css
 
@@ -778,7 +753,7 @@ export const x = (tag, element, config = {}) => {
 //
 //         const renderArgs = () => {
 //             // if watching the style property, convert the style string ('width:100%;') into an object ({width: '100%'})
-//             if (this._watchesForStyleUpdates) this[PROPS].style = CSSTextToObj(this.style.cssText);
+//             if (this._observesStyle) this[PROPS].style = CSSTextToObj(this.style.cssText);
 //             return [
 //                 extend({Host, CSS, host: this}, this[PROPS]),
 //                 this.state,
@@ -871,7 +846,7 @@ export const x = (tag, element, config = {}) => {
 //         // if we are setting our own attribute that we are tracking, then ignore this update.
 //         if (this[IGNORE_ATTR] === attr || oldValue === newValue) return;
 //         // opt-in notify for styles
-//         if (attr === 'style' && this._watchesForStyleUpdates) this.update();
+//         if (attr === 'style' && this._observesStyle) this.update();
 //         // else convert kabob-case to CamelCase
 //         else this[attrToProp(attr)] = newValue;
 //     }
@@ -944,7 +919,7 @@ export const x = (tag, element, config = {}) => {
 //         });
 //         // let the prototype know to listen for style changes here since ('style' in prototype) is true
 //         // and since we want more control over how the style is updated ex: {...userStyles, ...ourStyles}
-//         this.prototype._watchesForStyleUpdates = observedAttr.includes('style');
+//         this.prototype._observesStyle = observedAttr.includes('style');
 //         return observedAttr;
 //     };
 //
